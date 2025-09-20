@@ -26,12 +26,27 @@ fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unw
         4.0000, 2.9919, 2.3423, 1.9186, 1.6386, 1.4507, 1.3227, 1.2342, 1.1720, 1.1276, 1.0956,
     ]);
     let params = vec![2., 4.];
-    let model = get_double_exponential_model_with_constant_offset(tvec, params.clone());
-    let mut problem = SeparableProblemBuilder::new(model)
-        .observations(yvec)
-        .build()
-        .expect("Building a valid solver must not return an error.");
 
+    // bit hacky but it's a constructor for the same separable problem that
+    // we can use multiple times, because we can't clone the problem itself
+    let gen_separable_problem = || {
+        let model = get_double_exponential_model_with_constant_offset(tvec.clone(), params.clone());
+        SeparableProblemBuilder::new(model)
+            .observations(yvec.clone())
+            .build()
+            .expect("Building a valid solver must not return an error.")
+    };
+
+    // for SVD
+    let mut problem = LevMarProblemSvd::from(gen_separable_problem());
+    problem.set_params(&DVector::from(params.clone()));
+    let jacobian_numerical =
+        differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
+    let jacobian_calculated = problem.jacobian().expect("Jacobian must not be empty!");
+    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-6);
+
+    // for QR based calculations
+    let mut problem = LevMarProblemSvd::from(gen_separable_problem());
     problem.set_params(&DVector::from(params));
     let jacobian_numerical =
         differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
@@ -60,11 +75,13 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + v.sin());
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let mut separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblemSvd::from(separable_problem);
 
     let fixed_tau1 = 0.5;
     let fixed_tau2 = 7.5;
@@ -105,6 +122,8 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
         calculated_derivative_tau2,
         epsilon = 1e-6
     );
+
+    todo!("test qr based calculations as well")
 }
 
 #[test]
@@ -120,10 +139,12 @@ fn residuals_are_calculated_correctly_unweighted() {
 
     let data_length = tvec.len();
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblemSvd::from(separable_problem);
 
     problem.set_params(&DVector::from(params));
     // for the true parameters, as the initial guess, the residual should be very close to an
@@ -160,6 +181,8 @@ fn residuals_are_calculated_correctly_unweighted() {
         .residuals()
         .expect("Calculating residuals must not fail");
     assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-4);
+
+    todo!("add tests for QR calculations as well")
 }
 
 #[test]
@@ -181,11 +204,13 @@ fn residuals_are_calculated_correctly_with_weights() {
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + 2. * v.sin());
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let mut separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblemSvd::from(separable_problem);
 
     let params = DVector::from(vec![tau1, tau2]);
 
@@ -205,6 +230,8 @@ fn residuals_are_calculated_correctly_with_weights() {
         .residuals()
         .expect("Calculating residuals must not fail");
     assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-3);
+
+    todo!("test qr calculations as well")
 }
 
 #[test]
