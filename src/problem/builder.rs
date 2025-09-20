@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::problem::SeparableProblem;
 use crate::util::Weights;
-use levenberg_marquardt::LeastSquaresProblem;
 use nalgebra::{ComplexField, DMatrix, Dyn, OMatrix, OVector, RealField, Scalar};
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 use num_traits::{float::TotalOrder, Float, Zero};

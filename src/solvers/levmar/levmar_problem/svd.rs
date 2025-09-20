@@ -2,10 +2,10 @@ use super::{LevMarProblem, LinearSolver};
 use crate::{model::SeparableNonlinearModel, problem::RhsType, util::to_vector};
 use levenberg_marquardt::LeastSquaresProblem;
 use nalgebra::{
-    ComplexField, DMatrix, DefaultAllocator, Dyn, Matrix, MatrixViewMut, Owned, RealField, Scalar,
+    ComplexField, DMatrix, DefaultAllocator, Dyn, Matrix, MatrixViewMut, Owned, Scalar,
     UninitMatrix, Vector, SVD,
 };
-use num_traits::{float::TotalOrder, Float, FromPrimitive, Zero};
+use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::Mul;
 
 #[derive(Debug, Clone)]

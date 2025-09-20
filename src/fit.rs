@@ -3,10 +3,7 @@ use crate::{
     problem::{MultiRhs, RhsType, SeparableProblem, SingleRhs},
 };
 use levenberg_marquardt::MinimizationReport;
-use nalgebra::{
-    DMatrix, DMatrixView, DVector, DVectorView, Dyn, MatrixView, OMatrix, OVector, RealField,
-    Scalar, VectorView,
-};
+use nalgebra::{DMatrix, DMatrixView, DVectorView, Dyn, OMatrix, OVector, RealField, Scalar};
 use num_traits::Float;
 
 /// A helper type that contains the fitting problem after the

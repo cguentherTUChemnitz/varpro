@@ -118,7 +118,7 @@ where
     /// On failure (when the minimization was not deemeed successful), returns
     /// an error with the same information as in the success case.
     #[allow(clippy::result_large_err)]
-    #[deprecated(since = "0.14.0", note = "use the solve method instead")]
+    #[deprecated(since = "0.14.0", note = "use the fit_with_svd method instead")]
     pub fn fit<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -128,7 +128,7 @@ where
         Model::ScalarType: Scalar + ComplexField + RealField + Float + FromPrimitive,
         Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
     {
-        todo!()
+        self.fit_with_svd(problem)
     }
 }
 

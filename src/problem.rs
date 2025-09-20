@@ -1,9 +1,7 @@
 use crate::prelude::*;
-use crate::util::{to_vector, Weights};
-use nalgebra::{
-    ComplexField, DMatrix, DVector, DefaultAllocator, DimMin, MatrixView, Scalar, VectorView, SVD,
-};
-use nalgebra::{Dim, Dyn};
+use crate::util::Weights;
+use nalgebra::Dyn;
+use nalgebra::{ComplexField, DMatrix, MatrixView, Scalar, VectorView};
 
 mod builder;
 
