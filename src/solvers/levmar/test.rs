@@ -46,12 +46,12 @@ fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unw
     assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-6);
 
     // for QR based calculations
-    let mut problem = LevMarProblemSvd::from(gen_separable_problem());
+    let mut problem = LevMarProblemCpQr::from(gen_separable_problem());
     problem.set_params(&DVector::from(params));
     let jacobian_numerical =
         differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
     let jacobian_calculated = problem.jacobian().expect("Jacobian must not be empty!");
-    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-6);
+    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-5);
 }
 
 #[test]

@@ -69,9 +69,16 @@ where
 /// This is only used once when the problem is solved internally, which
 /// is why we can move out of the solver here and save some needless
 /// copies.
-pub trait LinearSolver {
+pub trait LinearSolver: sealed::Sealed {
     type ScalarType: Scalar;
     /// get the linear coefficients in matrix form. For single RHS
     /// this is a matrix with just one column.
     fn linear_coefficients_matrix(self) -> DMatrix<Self::ScalarType>;
+}
+
+impl<ScalarType: ComplexField> sealed::Sealed for ColPivQrLinearSolver<ScalarType> {}
+impl<ScalarType: ComplexField> sealed::Sealed for SvdSolver<ScalarType> {}
+
+pub mod sealed {
+    pub trait Sealed {}
 }
