@@ -1,12 +1,12 @@
 use super::*;
 use crate::model::test::MockSeparableNonlinearModel;
+use crate::model::SeparableModel;
 use crate::problem::SeparableProblemBuilder;
 use crate::test_helpers::differentiation::numerical_derivative;
 use crate::test_helpers::get_double_exponential_model_with_constant_offset;
-#[cfg(test)]
 use approx::assert_relative_eq;
-use levenberg_marquardt::differentiate_numerically;
-use nalgebra::DVector;
+use levenberg_marquardt::{differentiate_numerically, LeastSquaresProblem};
+use nalgebra::{DVector, Owned};
 
 // test that the jacobian of the least squares problem is correct if the parameter guesses
 // are correct. I observed that the numerical differentiation inside the levmar crate and my implementation
@@ -19,6 +19,30 @@ use nalgebra::DVector;
 // exactly why it stalls though. This seems like bad behavior.
 #[test]
 fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted() {
+    // svd based calculations
+    jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl::<
+        SvdSolver<f64>,
+    >();
+
+    // col piv qr
+    jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl::<
+        ColPivQrLinearSolver<f64>,
+    >();
+}
+
+fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -37,17 +61,8 @@ fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unw
             .expect("Building a valid solver must not return an error.")
     };
 
-    // for SVD
-    let mut problem = LevMarProblemSvd::from(gen_separable_problem());
+    let mut problem = LevMarProblem::<_, _, Solver>::from(gen_separable_problem());
     problem.set_params(&DVector::from(params.clone()));
-    let jacobian_numerical =
-        differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
-    let jacobian_calculated = problem.jacobian().expect("Jacobian must not be empty!");
-    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-6);
-
-    // for QR based calculations
-    let mut problem = LevMarProblemCpQr::from(gen_separable_problem());
-    problem.set_params(&DVector::from(params));
     let jacobian_numerical =
         differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
     let jacobian_calculated = problem.jacobian().expect("Jacobian must not be empty!");

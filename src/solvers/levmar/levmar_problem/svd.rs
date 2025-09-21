@@ -9,7 +9,7 @@ use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::Mul;
 
 #[derive(Debug, Clone)]
-pub(crate) struct SvdSolver<ScalarType>
+pub struct SvdSolver<ScalarType>
 where
     ScalarType: Scalar + ComplexField,
 {

@@ -7,10 +7,10 @@ use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, Scalar};
 mod svd;
 
 // TODO only on lapack feature
-mod colpiv_qr;
+pub mod colpiv_qr;
 
-use colpiv_qr::ColPivQrLinearSolver;
-use svd::SvdSolver;
+pub use colpiv_qr::ColPivQrLinearSolver;
+pub use svd::SvdSolver;
 
 mod builder;
 

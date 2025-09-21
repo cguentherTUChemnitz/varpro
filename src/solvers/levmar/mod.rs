@@ -8,7 +8,6 @@ use levenberg_marquardt::LeastSquaresProblem;
 /// This provides the Levenberg-Marquardt nonlinear least squares optimization algorithm.
 // pub use levenberg_marquardt::LevenbergMarquardt as LevMarSolver;
 use levenberg_marquardt::LevenbergMarquardt;
-use levmar_problem::{LevMarProblem, LevMarProblemCpQr, LevMarProblemSvd, LinearSolver};
 use nalgebra::{ComplexField, DMatrix, Dyn, Matrix, RawStorageMut, RealField, Scalar, U1};
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 use num_traits::float::TotalOrder;
@@ -21,6 +20,12 @@ mod test;
 // Maybe we'll make this module public, but for now I feel this would make
 // the API more complicated.
 mod levmar_problem;
+pub use levmar_problem::ColPivQrLinearSolver;
+pub use levmar_problem::LevMarProblem;
+pub use levmar_problem::LevMarProblemCpQr;
+pub use levmar_problem::LevMarProblemSvd;
+pub use levmar_problem::LinearSolver;
+pub use levmar_problem::SvdSolver;
 
 /// A thin wrapper around the
 /// [`LevenbergMarquardt`](https://docs.rs/levenberg-marquardt/latest/levenberg_marquardt/struct.LevenbergMarquardt.html)
