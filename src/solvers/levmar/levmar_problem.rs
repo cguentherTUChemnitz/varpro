@@ -2,7 +2,8 @@ use crate::{
     model::SeparableNonlinearModel,
     problem::{RhsType, SeparableProblem},
 };
-use nalgebra::{ComplexField, DMatrix, Scalar};
+use levenberg_marquardt::LeastSquaresProblem;
+use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, Scalar};
 mod svd;
 
 // TODO only on lapack feature
@@ -10,6 +11,8 @@ mod colpiv_qr;
 
 use colpiv_qr::ColPivQrLinearSolver;
 use svd::SvdSolver;
+
+mod builder;
 
 #[allow(type_alias_bounds)]
 /// levmar problem where the linear part is solved via column pivoted QR
@@ -40,12 +43,20 @@ where
     Solver: LinearSolver<ScalarType = Model::ScalarType>,
     Rhs: RhsType,
     Model: SeparableNonlinearModel,
+    Self: LeastSquaresProblem<
+        Model::ScalarType,
+        Dyn,
+        Dyn,
+        ParameterStorage = Owned<Model::ScalarType, Dyn, Const<1>>,
+    >,
 {
     fn from(problem: SeparableProblem<Model, Rhs>) -> Self {
-        Self {
+        let mut this = Self {
             separable_problem: problem,
             cached: None,
-        }
+        };
+        this.set_params(&this.separable_problem.model.params());
+        this
     }
 }
 
