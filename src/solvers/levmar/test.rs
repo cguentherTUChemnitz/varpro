@@ -17,19 +17,9 @@ use nalgebra::{DVector, Owned};
 // stalls when one of the initial guesses is 1 or smaller, because it weill use a step size of 1 to calculate
 // the finite difference and make one of the taus zero, which means 1/tau diverges. I don't know
 // exactly why it stalls though. This seems like bad behavior.
-#[test]
-fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted() {
-    // svd based calculations
-    jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl::<
-        SvdSolver<f64>,
-    >();
-
-    // col piv qr
-    jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl::<
-        ColPivQrLinearSolver<f64>,
-    >();
-}
-
+type SvdSolverF64 = SvdSolver<f64>;
+type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted_impl<
     Solver,
 >()
