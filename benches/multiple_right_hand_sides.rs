@@ -1,5 +1,4 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use levenberg_marquardt::LeastSquaresProblem;
 use nalgebra::DMatrix;
 use nalgebra::DVector;
 use nalgebra::Dyn;

@@ -75,7 +75,7 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + v.sin());
 
-    let mut separable_problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
@@ -204,7 +204,7 @@ fn residuals_are_calculated_correctly_with_weights() {
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + 2. * v.sin());
 
-    let mut separable_problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
