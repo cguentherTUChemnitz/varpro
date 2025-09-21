@@ -10,7 +10,6 @@ use levenberg_marquardt::LeastSquaresProblem;
 use levenberg_marquardt::LevenbergMarquardt;
 use levmar_problem::{LevMarProblem, LevMarProblemCpQr, LevMarProblemSvd, LinearSolver};
 use nalgebra::{ComplexField, DMatrix, Dyn, Matrix, RawStorageMut, RealField, Scalar, U1};
-
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 use num_traits::float::TotalOrder;
 use num_traits::{Float, FromPrimitive};
