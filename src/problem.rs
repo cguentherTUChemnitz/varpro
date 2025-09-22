@@ -66,8 +66,6 @@ where
     pub(crate) Y_w: DMatrix<Model::ScalarType>,
     /// a reference to the separable model we are trying to fit to the data
     pub(crate) model: Model,
-    /// truncation epsilon for SVD below which all singular values are assumed zero
-    pub(crate) svd_epsilon: <Model::ScalarType as ComplexField>::RealField,
     /// the weights of the data. If none are given, the data is not weighted
     /// If weights were provided, the builder has checked that the weights have the
     /// correct dimension for the data
@@ -84,7 +82,6 @@ where
         f.debug_struct("SeparableProblem")
             .field("y_w", &self.Y_w)
             .field("model", &"/* omitted */")
-            .field("svd_epsilon", &self.svd_epsilon)
             .field("weights", &self.weights)
             .finish()
     }

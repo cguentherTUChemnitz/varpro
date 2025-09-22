@@ -233,23 +233,6 @@ where
         Mul<Model::ScalarType, Output = Model::ScalarType> + Float,
     Model: SeparableNonlinearModel,
 {
-    /// **Optional** This value is relevant for the solver, because it uses singular value decomposition
-    /// internally. This method sets a value `\epsilon` for which smaller (i.e. absolute - wise) singular
-    /// values are considered zero. In essence this gives a truncation of the SVD. This might be
-    /// helpful if two basis functions become linear dependent when the nonlinear model parameters
-    /// align in an unfortunate way. In this case a higher epsilon might increase the robustness
-    /// of the fitting process.
-    ///
-    /// If this value is not given, it will be set to machine epsilon.
-    ///
-    /// The given epsilon is automatically converted to a non-negative number.
-    pub fn epsilon(self, eps: <Model::ScalarType as ComplexField>::RealField) -> Self {
-        Self {
-            epsilon: Some(<_ as Float>::abs(eps)),
-            ..self
-        }
-    }
-
     /// **Optional** Add diagonal weights to the problem (meaning data points are statistically
     /// independent). If this is not given, the problem is unweighted, i.e. each data point has
     /// unit weight.
@@ -316,7 +299,6 @@ where
             // these parameters all come from the builder
             Y_w,
             model,
-            svd_epsilon: epsilon,
             weights,
             phantom: Default::default(),
         };
