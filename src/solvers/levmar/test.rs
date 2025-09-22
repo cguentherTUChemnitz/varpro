@@ -59,7 +59,7 @@ where
     assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-5);
 }
 
-#[test]
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 // I am implementing my own test that checks if my jacobian and residual calculations are
 // correct even for params far away from the true tau1, tau2.
 // What I am doing is to numerically differentiate the residual sum of squares using my own
@@ -68,7 +68,19 @@ where
 // I am using the formula for the partial derivatives of the residual sum of squares from
 // [my post](https://geo-ant.github.io/blog/2020/variable-projection-part-1-fundamentals/) on varpro
 // (found between numbered formulas 8 and 9).
-fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squares_weighted() {
+fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squares_weighted_impl<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -86,7 +98,7 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
         .build()
         .expect("Building a valid solver must not return an error.");
 
-    let mut problem = LevMarProblemSvd::from(separable_problem);
+    let mut problem = LevMarProblem::<_, _, Solver>::from(separable_problem);
 
     let fixed_tau1 = 0.5;
     let fixed_tau2 = 7.5;
@@ -127,8 +139,6 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
         calculated_derivative_tau2,
         epsilon = 1e-6
     );
-
-    todo!("test qr based calculations as well")
 }
 
 #[test]
