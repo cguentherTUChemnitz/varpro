@@ -11,6 +11,7 @@ use std::ops::Mul;
 
 /// caches the calculations for the implementation of the LevMarProblem
 /// with column-pivoted QR decomposition.
+#[derive(Debug)]
 pub struct ColPivQrLinearSolver<ScalarType>
 where
     ScalarType: Scalar + ComplexField,

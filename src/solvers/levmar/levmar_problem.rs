@@ -69,7 +69,7 @@ where
 /// This is only used once when the problem is solved internally, which
 /// is why we can move out of the solver here and save some needless
 /// copies.
-pub trait LinearSolver: sealed::Sealed {
+pub trait LinearSolver: std::fmt::Debug + sealed::Sealed {
     type ScalarType: Scalar;
     /// get the linear coefficients in matrix form. For single RHS
     /// this is a matrix with just one column.
