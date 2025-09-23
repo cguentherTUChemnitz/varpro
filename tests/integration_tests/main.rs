@@ -17,6 +17,8 @@ use shared_test_code::models::OLearyExampleModel;
 use varpro::prelude::*;
 use varpro::problem::SeparableProblemBuilder;
 use varpro::solvers::levmar::*;
+use varpro::statistics;
+use varpro::statistics::FitStatistics;
 
 #[test]
 // sanity check my calculations above
@@ -119,13 +121,15 @@ fn double_exponential_fitting_without_noise_produces_accurate_results() {
 
     _ = format!("{problem:?}");
 
-    let (fit_result, statistics) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fit must complete succesfully");
     assert!(
         fit_result.minimization_report.termination.was_successful(),
         "Levenberg Marquardt did not converge"
     );
+    let statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert_relative_eq!(fit_result.best_fit().unwrap(), y, epsilon = 1e-5);
     // TODO can we test this?
     // assert_relative_eq!(
@@ -187,9 +191,11 @@ fn double_exponential_fitting_without_noise_produces_accurate_results_with_handr
         .build()
         .expect("Building valid problem should not panic");
 
-    let (fit_result, statistics) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fitting must exit succesfully");
+    let statitics = FitStatistics::try_from(&fit_result).unwrap();
 
     //TODO can we test this??
     // assert_relative_eq!(
@@ -576,9 +582,13 @@ fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit()
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let (fit_result, fit_stat) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fitting must not fail");
+
+    let fit_stat = FitStatistics::try_from(&fit_result).unwrap();
 
     // extract the calculated paramters, because tau1 and tau2 might switch places here
     let tau1_calc = fit_result.nonlinear_parameters()[0];
@@ -646,9 +656,12 @@ fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_a
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let (fit_result, fit_stat) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fitting must not fail");
+
+    let fit_stat = FitStatistics::try_from(&fit_result).unwrap();
 
     // extract the calculated paramters, because tau1 and tau2 might switch places here
     let tau1_calc = fit_result.nonlinear_parameters()[0];
@@ -735,9 +748,12 @@ fn oleary_example_with_handrolled_model_produces_correct_results() {
         .build()
         .unwrap();
 
-    let (fit_result, statistics) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fitting must exit succesfully");
+    let statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert!(
         fit_result.minimization_report.termination.was_successful(),
         "fitting did not terminate successfully"
@@ -851,8 +867,10 @@ fn test_oleary_example_with_separable_model() {
         .build()
         .unwrap();
 
-    let (fit_result, statistics) = LevMarSolver::default()
-        .fit_with_statistics(problem)
+    let problem = LevMarProblemSvd::from(problem);
+
+    let fit_result = LevMarSolver::default()
+        .solve(problem)
         .expect("fitting must exit succesfully");
     assert!(
         fit_result.minimization_report.termination.was_successful(),
@@ -884,6 +902,7 @@ fn test_oleary_example_with_separable_model() {
         1.3257e-03,
         1.4716e-03,
     ]);
+    let statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert_relative_eq!(
         expected_weighted_residuals,
         statistics.weighted_residuals(),

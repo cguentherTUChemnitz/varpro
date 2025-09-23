@@ -30,7 +30,6 @@ pub enum Error<ModelError: std::error::Error> {
     /// Failed to calculate the inverse of a matrix
     #[error("Matrix inversion error")]
     MatrixInversion,
-    /// failed calculating linear coefficients
     #[error("Failed to calculate linear coefficients")]
     LinearCoeffs,
 }
@@ -336,7 +335,7 @@ where
     range
 }
 
-impl<Model> TryFrom<FitResult<Model, SingleRhs>> for FitStatistics<Model>
+impl<Model> TryFrom<&FitResult<Model, SingleRhs>> for FitStatistics<Model>
 where
     Model: SeparableNonlinearModel,
     DefaultAllocator: Allocator<Dyn, Dyn>,
@@ -346,13 +345,14 @@ where
 {
     type Error = self::Error<Model::Error>;
 
-    fn try_from(value: FitResult<Model, SingleRhs>) -> Result<Self, Self::Error> {
+    fn try_from(value: &FitResult<Model, SingleRhs>) -> Result<Self, Self::Error> {
         Self::try_calculate(
             value.problem.model(),
             value.problem.weighted_data(),
             &value.problem.weights,
             value
                 .linear_coefficients
+                .as_ref()
                 .ok_or(Error::LinearCoeffs)?
                 .as_view(),
         )

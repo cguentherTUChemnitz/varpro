@@ -50,7 +50,7 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    fn solve<Rhs: RhsType, Solver: LinearSolver<ScalarType = Model::ScalarType>>(
+    pub fn solve<Rhs: RhsType, Solver: LinearSolver<ScalarType = Model::ScalarType>>(
         &self,
         problem: LevMarProblem<Model, Rhs, Solver>,
     ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
@@ -133,76 +133,6 @@ where
         Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
     {
         self.fit_with_svd(problem)
-    }
-}
-
-impl<Model> LevMarSolver<Model>
-where
-    Model: SeparableNonlinearModel,
-{
-    /// Same as the [`LevMarSolver::fit`](LevMarSolver::fit) function but also calculates some additional
-    /// statistical information about the fit, if the fit was successful.
-    ///
-    /// # Returns
-    ///
-    /// See also the [`LevMarSolver::fit`](LevMarSolver::fit) function, but on success also returns statistical
-    /// information about the fit in the form of a [`FitStatistics`] object.
-    ///
-    /// ## Problems with Multiple Right Hand Sides
-    ///
-    /// **Note** For now, fitting with statistics is only supported for problems
-    /// with a single right hand side. If this function is invoked on a problem
-    /// with multiple right hand sides, an error is returned.
-    #[allow(clippy::result_large_err, clippy::type_complexity)]
-    //@todo(geo-ant) this statistics interface is not so good. Rather
-    // get it from the fit result
-    pub fn fit_with_statistics(
-        &self,
-        problem: SeparableProblem<Model, SingleRhs>,
-    ) -> Result<(FitResult<Model, SingleRhs>, FitStatistics<Model>), FitResult<Model, SingleRhs>>
-    where
-        Model: SeparableNonlinearModel,
-        Model::ScalarType: Scalar + ComplexField + RealField + Float,
-        // TODO QR
-        Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
-    {
-        let FitResult {
-            problem,
-            minimization_report,
-            linear_coefficients,
-        } = self.fit(problem)?;
-        if !minimization_report.termination.was_successful() {
-            return Err(FitResult::new(
-                problem,
-                linear_coefficients,
-                minimization_report,
-            ));
-        }
-
-        let Some(coefficients) = linear_coefficients else {
-            return Err(FitResult::new(
-                problem,
-                linear_coefficients,
-                minimization_report,
-            ));
-        };
-
-        match FitStatistics::try_calculate(
-            problem.model(),
-            problem.weighted_data(),
-            problem.weights(),
-            coefficients.as_view(),
-        ) {
-            Ok(statistics) => Ok((
-                FitResult::new(problem, Some(coefficients), minimization_report),
-                statistics,
-            )),
-            Err(_) => Err(FitResult::new(
-                problem,
-                Some(coefficients),
-                minimization_report,
-            )),
-        }
     }
 }
 
