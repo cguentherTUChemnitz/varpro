@@ -8,16 +8,19 @@ use nalgebra::U1;
 use shared_test_code::evaluate_complete_model_at_params;
 use shared_test_code::get_double_exponential_model_with_constant_offset;
 use shared_test_code::levmar_mrhs::DoubleExponentialModelWithConstantOffsetLevmarMrhs;
-
 use shared_test_code::linspace;
 use shared_test_code::models::o_leary_example_model;
 use shared_test_code::models::DoubleExpModelWithConstantOffsetSepModel;
 use shared_test_code::models::DoubleExponentialDecayFittingWithOffsetLevmar;
 use shared_test_code::models::OLearyExampleModel;
+use varpro::model::SeparableModel;
 use varpro::prelude::*;
-use varpro::problem::SeparableProblemBuilder;
+use varpro::problem::{MultiRhs, SeparableProblemBuilder, SingleRhs};
 use varpro::solvers::levmar::*;
 use varpro::statistics::FitStatistics;
+
+type SvdSolverF64 = SvdSolver<f64>;
+type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
 
 #[test]
 // sanity check my calculations above
@@ -90,8 +93,19 @@ fn sanity_check_jacobian_of_levenberg_marquardt_problem_mrhs_is_correct() {
     assert_relative_eq!(jacobian_numerical, jacobian_trait, epsilon = 1e-4);
 }
 
-#[test]
-fn double_exponential_fitting_without_noise_produces_accurate_results() {
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+fn double_exponential_fitting_without_noise_produces_accurate_results_impl<Solver>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // the independent variable
     let x = linspace(0., 12.5, 1024);
     let tau1_guess = 2.;
@@ -120,7 +134,7 @@ fn double_exponential_fitting_without_noise_produces_accurate_results() {
 
     _ = format!("{problem:?}");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fit must complete succesfully");
@@ -155,8 +169,21 @@ fn double_exponential_fitting_without_noise_produces_accurate_results() {
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[test]
-fn double_exponential_fitting_without_noise_produces_accurate_results_with_handrolled_model() {
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+fn double_exponential_fitting_without_noise_produces_accurate_results_with_handrolled_model_impl<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<DoubleExpModelWithConstantOffsetSepModel, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // true parameters
     let tau1 = 1.;
     let tau2 = 3.;
@@ -184,7 +211,7 @@ fn double_exponential_fitting_without_noise_produces_accurate_results_with_handr
         .build()
         .expect("Building valid problem should not panic");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fitting must exit succesfully");
@@ -389,9 +416,20 @@ fn double_exponential_model_with_levenberg_marquardt_mrhs_produces_accurate_resu
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[test]
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 #[allow(non_snake_case)]
-fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results() {
+fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results_impl<Solver>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<DoubleExpModelWithConstantOffsetSepModel, MultiRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     let x = linspace(0., 12.5, 20);
     let tau1 = 1.;
     let tau2 = 3.;
@@ -422,7 +460,7 @@ fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fitting must not fail");
@@ -458,9 +496,22 @@ fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[test]
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 #[allow(non_snake_case)]
-fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_cols_than_params() {
+fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_cols_than_params_impl<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<DoubleExpModelWithConstantOffsetSepModel, MultiRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     let x = linspace(0., 12.5, 20);
     let tau1 = 1.;
     let tau2 = 3.;
@@ -500,7 +551,7 @@ fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_c
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fitting must not fail");
@@ -547,8 +598,19 @@ fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_c
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[test]
-fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit() {
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<Solver>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<DoubleExpModelWithConstantOffsetSepModel, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // I have python scripts using the lmfit package that allow me to test
     // my results.
     // this tests against the file python/multiexp_decay.py
@@ -570,7 +632,7 @@ fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit()
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
         .solve(problem)
@@ -613,8 +675,21 @@ fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit()
     );
 }
 
-#[test]
-fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit() {
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<DoubleExpModelWithConstantOffsetSepModel, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // I have python scripts using the lmfit package that allow me to test
     // my results.
     // this tests against the file python/weighted_multiexp_decay.py
@@ -644,7 +719,7 @@ fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_a
         .build()
         .expect("building the lev mar problem must not fail");
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fitting must not fail");
@@ -712,9 +787,20 @@ fn read_vec_f64(path: impl AsRef<std::path::Path>, size_hint: Option<usize>) -> 
     vect
 }
 
-#[test]
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 // this also tests the correct application of weights
-fn oleary_example_with_handrolled_model_produces_correct_results() {
+fn oleary_example_with_handrolled_model_produces_correct_results_impl<Solver>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<OLearyExampleModel, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // those are the initial guesses from the example in the oleary matlab code
     let initial_guess = OVector::from_column_slice_generic(Dyn(3), U1, &[0.5, 2., 3.]);
     // these are the original timepoints from the matlab code
@@ -736,7 +822,7 @@ fn oleary_example_with_handrolled_model_produces_correct_results() {
         .build()
         .unwrap();
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
         .solve(problem)
@@ -831,9 +917,20 @@ fn oleary_example_with_handrolled_model_produces_correct_results() {
     );
 }
 
-#[test]
+#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
 // this also tests the correct application of weights
-fn test_oleary_example_with_separable_model() {
+fn test_oleary_example_with_separable_model_impl<Solver>()
+where
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        nalgebra::Dyn,
+        nalgebra::Dyn,
+        ParameterStorage = nalgebra::Owned<f64, nalgebra::Dyn>,
+        JacobianStorage = nalgebra::Owned<f64, nalgebra::Dyn, nalgebra::Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, nalgebra::Dyn, nalgebra::Const<1>>,
+    >,
+{
     // those are the initial guesses from the example in the oleary matlab code
     let initial_guess = vec![0.5, 2., 3.];
     // these are the original timepoints from the matlab code
@@ -855,7 +952,7 @@ fn test_oleary_example_with_separable_model() {
         .build()
         .unwrap();
 
-    let problem = LevMarProblemSvd::from(problem);
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
         .solve(problem)
