@@ -1,14 +1,12 @@
 use crate::fit::FitResult;
 use crate::prelude::*;
-use crate::problem::{RhsType, SeparableProblem, SingleRhs};
-use crate::statistics::FitStatistics;
-use crate::util::to_vector;
+use crate::problem::{RhsType, SeparableProblem};
 use levenberg_marquardt::LeastSquaresProblem;
 /// Type alias for the solver of the [levenberg_marquardt](https://crates.io/crates/levenberg-marquardt) crate.
 /// This provides the Levenberg-Marquardt nonlinear least squares optimization algorithm.
 // pub use levenberg_marquardt::LevenbergMarquardt as LevMarSolver;
 use levenberg_marquardt::LevenbergMarquardt;
-use nalgebra::{ComplexField, DMatrix, Dyn, Matrix, RawStorageMut, RealField, Scalar, U1};
+use nalgebra::{ComplexField, Dyn, RealField, Scalar};
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 use num_traits::float::TotalOrder;
 use num_traits::{Float, FromPrimitive};
@@ -144,14 +142,4 @@ where
     fn default() -> Self {
         Self::with_solver(Default::default())
     }
-}
-
-/// copy the given matrix to a matrix column by stacking its column on top of each other
-fn copy_matrix_to_column<T: Scalar + std::fmt::Display + Clone, S: RawStorageMut<T, Dyn>>(
-    source: DMatrix<T>,
-    target: &mut Matrix<T, Dyn, U1, S>,
-) {
-    //@todo make this more efficient...
-    //@todo inefficient
-    target.copy_from(&to_vector(source));
 }

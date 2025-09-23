@@ -17,7 +17,6 @@ use shared_test_code::models::OLearyExampleModel;
 use varpro::prelude::*;
 use varpro::problem::SeparableProblemBuilder;
 use varpro::solvers::levmar::*;
-use varpro::statistics;
 use varpro::statistics::FitStatistics;
 
 #[test]
@@ -129,14 +128,8 @@ fn double_exponential_fitting_without_noise_produces_accurate_results() {
         fit_result.minimization_report.termination.was_successful(),
         "Levenberg Marquardt did not converge"
     );
-    let statistics = FitStatistics::try_from(&fit_result).unwrap();
+    let _statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert_relative_eq!(fit_result.best_fit().unwrap(), y, epsilon = 1e-5);
-    // TODO can we test this?
-    // assert_relative_eq!(
-    //     fit_result.problem.residuals().unwrap(),
-    //     statistics.weighted_residuals(),
-    //     epsilon = 1e-5
-    // );
 
     // extract the calculated paramters, because tau1 and tau2 might switch places here
     let (tau1_index, tau2_index) =
@@ -195,14 +188,7 @@ fn double_exponential_fitting_without_noise_produces_accurate_results_with_handr
     let fit_result = LevMarSolver::default()
         .solve(problem)
         .expect("fitting must exit succesfully");
-    let statitics = FitStatistics::try_from(&fit_result).unwrap();
-
-    //TODO can we test this??
-    // assert_relative_eq!(
-    //     fit_result.problem.residuals().unwrap(),
-    //     statistics.weighted_residuals(),
-    //     epsilon = 1e-5
-    // );
+    let _statitics = FitStatistics::try_from(&fit_result).unwrap();
 
     assert_relative_eq!(fit_result.best_fit().unwrap(), y, epsilon = 1e-5);
 
@@ -436,8 +422,9 @@ fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results
         .build()
         .expect("building the lev mar problem must not fail");
 
+    let problem = LevMarProblemSvd::from(problem);
     let fit_result = LevMarSolver::default()
-        .fit(problem)
+        .solve(problem)
         .expect("fitting must not fail");
 
     assert_relative_eq!(fit_result.best_fit().unwrap(), Y, epsilon = 1e-5);
@@ -513,8 +500,9 @@ fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_c
         .build()
         .expect("building the lev mar problem must not fail");
 
+    let problem = LevMarProblemSvd::from(problem);
     let fit_result = LevMarSolver::default()
-        .fit(problem)
+        .solve(problem)
         .expect("fitting must not fail");
 
     assert_relative_eq!(fit_result.best_fit().unwrap(), Y, epsilon = 1e-5);

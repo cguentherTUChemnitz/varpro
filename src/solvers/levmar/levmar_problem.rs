@@ -68,6 +68,7 @@ where
 /// is why we can move out of the solver here and save some needless
 /// copies.
 pub trait LinearSolver: std::fmt::Debug + sealed::Sealed {
+    /// numeric type used in this solver
     type ScalarType: Scalar;
     /// get the linear coefficients in matrix form. For single RHS
     /// this is a matrix with just one column.

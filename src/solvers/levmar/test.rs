@@ -1,12 +1,13 @@
 use super::*;
-use crate::model::test::MockSeparableNonlinearModel;
 use crate::model::SeparableModel;
 use crate::problem::SeparableProblemBuilder;
 use crate::test_helpers::differentiation::numerical_derivative;
 use crate::test_helpers::get_double_exponential_model_with_constant_offset;
+use crate::util::to_vector;
+use crate::{model::test::MockSeparableNonlinearModel, problem::SingleRhs};
 use approx::assert_relative_eq;
 use levenberg_marquardt::{differentiate_numerically, LeastSquaresProblem};
-use nalgebra::{DVector, Owned};
+use nalgebra::{DMatrix, DVector, Owned};
 
 // test that the jacobian of the least squares problem is correct if the parameter guesses
 // are correct. I observed that the numerical differentiation inside the levmar crate and my implementation
@@ -340,18 +341,4 @@ fn matrix_to_vector_works() {
 
     let vec = to_vector(mat);
     assert_eq!(vec, nalgebra::dvector![1., 2., 3., 4., 5., 6.]);
-}
-
-#[test]
-fn vector_matrix_copy_works() {
-    let mut mat = DMatrix::<f64>::zeros(4, 2);
-    let mat2 = nalgebra::dmatrix!(1.,3.;
-                                                                              2.,4.);
-    copy_matrix_to_column(mat2, &mut mat.column_mut(1));
-    let expected = nalgebra::dmatrix!(0.,1.;
-    0.,2.;
-    0.,3.;
-    0.,4.;
-    );
-    assert_eq!(mat, expected);
 }
