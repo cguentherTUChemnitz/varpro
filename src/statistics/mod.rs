@@ -1,5 +1,5 @@
 use self::numeric_traits::CastF64;
-use crate::{prelude::SeparableNonlinearModel, util::Weights};
+use crate::{fit::FitResult, prelude::SeparableNonlinearModel, problem::SingleRhs, util::Weights};
 use nalgebra::{
     allocator::Allocator, ComplexField, DefaultAllocator, Dim, DimAdd, DimMin, DimSub, Dyn, Matrix,
     OMatrix, OVector, RealField, Scalar, VectorView, U0, U1,
@@ -17,7 +17,7 @@ pub mod numeric_traits;
 /// Information about an error that can occur during calculation of the
 /// of the fit statistics.
 #[derive(Debug, Clone, ThisError)]
-pub(crate) enum Error<ModelError: std::error::Error> {
+pub enum Error<ModelError: std::error::Error> {
     /// Model returned error when it was evaluated
     #[error("Model returned error when it was evaluated:{}", .0)]
     ModelEvaluation(#[from] ModelError),
@@ -30,6 +30,9 @@ pub(crate) enum Error<ModelError: std::error::Error> {
     /// Failed to calculate the inverse of a matrix
     #[error("Matrix inversion error")]
     MatrixInversion,
+    /// failed calculating linear coefficients
+    #[error("Failed to calculate linear coefficients")]
+    LinearCoeffs,
 }
 
 /// This structure contains additional statistical information
@@ -333,6 +336,29 @@ where
     range
 }
 
+impl<Model> TryFrom<FitResult<Model, SingleRhs>> for FitStatistics<Model>
+where
+    Model: SeparableNonlinearModel,
+    DefaultAllocator: Allocator<Dyn, Dyn>,
+    DefaultAllocator: Allocator<Dyn>,
+    Model::ScalarType: Scalar + ComplexField + Float + Zero + FromPrimitive,
+    Model::ScalarType: Scalar + Copy + RealField + Float + Zero + FromPrimitive,
+{
+    type Error = self::Error<Model::Error>;
+
+    fn try_from(value: FitResult<Model, SingleRhs>) -> Result<Self, Self::Error> {
+        Self::try_calculate(
+            value.problem.model(),
+            value.problem.weighted_data(),
+            &value.problem.weights,
+            value
+                .linear_coefficients
+                .ok_or(Error::LinearCoeffs)?
+                .as_view(),
+        )
+    }
+}
+
 impl<Model> FitStatistics<Model>
 where
     Model: SeparableNonlinearModel,
@@ -356,11 +382,10 @@ where
         linear_coefficients: VectorView<Model::ScalarType, Dyn>,
     ) -> Result<Self, Error<Model::Error>>
     where
-        Model::ScalarType: Scalar + ComplexField + Float + Zero + FromPrimitive,
+        Model::ScalarType: Scalar + Copy + RealField + Float + Zero + FromPrimitive,
         Model: SeparableNonlinearModel,
         DefaultAllocator: Allocator<Dyn>,
         DefaultAllocator: Allocator<Dyn, Dyn>,
-        Model::ScalarType: Scalar + ComplexField + Copy + RealField + Float,
     {
         // this is a sanity check and should never actually fail
         // it just makes sure I have been using this correctly inside of this crate
