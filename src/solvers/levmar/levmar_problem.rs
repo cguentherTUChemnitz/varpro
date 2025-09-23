@@ -12,8 +12,6 @@ pub mod colpiv_qr;
 pub use colpiv_qr::ColPivQrLinearSolver;
 pub use svd::SvdSolver;
 
-mod builder;
-
 #[allow(type_alias_bounds)]
 /// levmar problem where the linear part is solved via column pivoted QR
 /// decomposition.

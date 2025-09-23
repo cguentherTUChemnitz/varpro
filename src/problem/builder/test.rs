@@ -13,12 +13,10 @@ fn new_builder_starts_with_empty_fields() {
     let SeparableProblemBuilder {
         Y: y,
         separable_model: _model,
-        epsilon,
         weights,
         ..
     } = builder;
     assert!(y.is_none());
-    assert!(epsilon.is_none());
     assert_eq!(weights, Weights::Unit);
 }
 

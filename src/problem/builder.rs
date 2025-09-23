@@ -89,11 +89,6 @@ where
     Y: Option<DMatrix<Model::ScalarType>>,
     /// Required: the model to be fitted to the data
     separable_model: Model,
-    /// Optional: set epsilon below which two singular values
-    /// are considered zero.
-    /// if this is not given, when building the builder,
-    /// the this is set to machine epsilon.
-    epsilon: Option<<Model::ScalarType as ComplexField>::RealField>,
     /// Optional: weights to be applied to the data for weightes least squares
     /// if no weights are given, the problem is unweighted, i.e. the same as if
     /// all weights were 1.
@@ -117,7 +112,6 @@ where
         Self {
             Y: None,
             separable_model: model,
-            epsilon: None,
             weights: Weights::default(),
             phantom: Default::default(),
         }
@@ -195,7 +189,6 @@ where
         Self {
             Y: None,
             separable_model: model,
-            epsilon: None,
             weights: Weights::default(),
             phantom: Default::default(),
         }
@@ -266,7 +259,6 @@ where
         // and assign the defaults to the values we don't have
         let Y = self.Y.ok_or(SeparableProblemBuilderError::YDataMissing)?;
         let model = self.separable_model;
-        let epsilon = self.epsilon.unwrap_or_else(Float::epsilon);
         let weights = self.weights;
 
         // now do some sanity checks for the values and return
