@@ -902,6 +902,7 @@ fn test_oleary_example_with_separable_model() {
         1.3257e-03,
         1.4716e-03,
     ]);
+
     let statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert_relative_eq!(
         expected_weighted_residuals,
