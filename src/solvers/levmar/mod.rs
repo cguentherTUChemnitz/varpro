@@ -48,7 +48,7 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    pub fn solve<Rhs: RhsType, Solver: LinearSolver<ScalarType = Model::ScalarType>>(
+    pub fn solve_generic<Rhs: RhsType, Solver: LinearSolver<ScalarType = Model::ScalarType>>(
         &self,
         problem: LevMarProblem<Model, Rhs, Solver>,
     ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
@@ -75,7 +75,7 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    pub fn fit_with_cpqr<Rhs: RhsType>(
+    pub fn solve_with_cpqr<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
     ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
@@ -91,11 +91,11 @@ where
             + TotalOrder,
     {
         let levmar_problem = LevMarProblemCpQr::from(problem);
-        self.solve(levmar_problem)
+        self.solve_generic(levmar_problem)
     }
 
     #[allow(clippy::result_large_err)]
-    pub fn fit_with_svd<Rhs: RhsType>(
+    pub fn solve_with_svd<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
     ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
@@ -104,7 +104,21 @@ where
         Model::ScalarType: Scalar + ComplexField + RealField + Float + FromPrimitive,
     {
         let levmar_problem = LevMarProblemSvd::from(problem);
-        self.solve(levmar_problem)
+        self.solve_generic(levmar_problem)
+    }
+
+    #[allow(clippy::result_large_err)]
+    /// just an alias for [Self::solve_with_svd], which is a reasonable general
+    /// purpose default solver.
+    pub fn solve<Rhs: RhsType>(
+        &self,
+        problem: SeparableProblem<Model, Rhs>,
+    ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
+    where
+        Model: SeparableNonlinearModel,
+        Model::ScalarType: Scalar + ComplexField + RealField + Float + FromPrimitive,
+    {
+        self.solve_with_svd(problem)
     }
 
     /// Try to solve the given varpro minimization problem. The parameters of
@@ -120,7 +134,7 @@ where
     /// On failure (when the minimization was not deemeed successful), returns
     /// an error with the same information as in the success case.
     #[allow(clippy::result_large_err)]
-    #[deprecated(since = "0.14.0", note = "use the fit_with_svd method instead")]
+    #[deprecated(since = "0.14.0", note = "use the solve method instead")]
     pub fn fit<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -130,7 +144,7 @@ where
         Model::ScalarType: Scalar + ComplexField + RealField + Float + FromPrimitive,
         Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
     {
-        self.fit_with_svd(problem)
+        self.solve_with_svd(problem)
     }
 }
 

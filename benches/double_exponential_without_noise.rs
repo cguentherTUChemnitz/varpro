@@ -69,7 +69,7 @@ where
     Model: SeparableNonlinearModel<ScalarType = f64> + std::fmt::Debug,
 {
     let result = LevMarSolver::default()
-        .fit_with_svd(problem)
+        .solve_with_svd(problem)
         .expect("fitting must exit successfully");
     let params = result.nonlinear_parameters();
     let coeff = result.linear_coefficients().unwrap();

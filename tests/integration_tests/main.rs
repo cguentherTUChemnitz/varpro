@@ -136,7 +136,7 @@ where
 
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fit must complete succesfully");
     assert!(
         fit_result.minimization_report.termination.was_successful(),
@@ -213,7 +213,7 @@ where
 
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must exit succesfully");
     let _statitics = FitStatistics::try_from(&fit_result).unwrap();
 
@@ -462,7 +462,7 @@ where
 
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must not fail");
 
     assert_relative_eq!(fit_result.best_fit().unwrap(), Y, epsilon = 1e-5);
@@ -553,7 +553,7 @@ where
 
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must not fail");
 
     assert_relative_eq!(fit_result.best_fit().unwrap(), Y, epsilon = 1e-5);
@@ -635,7 +635,7 @@ where
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must not fail");
 
     let fit_stat = FitStatistics::try_from(&fit_result).unwrap();
@@ -721,7 +721,7 @@ where
 
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must not fail");
 
     let fit_stat = FitStatistics::try_from(&fit_result).unwrap();
@@ -825,7 +825,7 @@ where
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must exit succesfully");
     let statistics = FitStatistics::try_from(&fit_result).unwrap();
     assert!(
@@ -864,12 +864,6 @@ where
         statistics.weighted_residuals(),
         epsilon = 1e-5
     );
-    // TODO can we test this?
-    // assert_relative_eq!(
-    //     fit_result.problem.residuals().unwrap(),
-    //     statistics.weighted_residuals(),
-    //     epsilon = 1e-5
-    // );
 
     let expected_sigma = 2.7539e-03;
     assert_relative_eq!(
@@ -955,7 +949,7 @@ where
     let problem = LevMarProblem::<_, _, Solver>::from(problem);
 
     let fit_result = LevMarSolver::default()
-        .solve(problem)
+        .solve_generic(problem)
         .expect("fitting must exit succesfully");
     assert!(
         fit_result.minimization_report.termination.was_successful(),
@@ -994,12 +988,6 @@ where
         statistics.weighted_residuals(),
         epsilon = 1e-5
     );
-    // TODO can we test this?
-    // assert_relative_eq!(
-    //     fit_result.problem.residuals().unwrap(),
-    //     statistics.weighted_residuals(),
-    //     epsilon = 1e-5
-    // );
 
     let expected_sigma = 2.7539e-03;
     assert_relative_eq!(
