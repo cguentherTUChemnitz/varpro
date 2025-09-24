@@ -82,7 +82,8 @@ pub mod error;
 /// For some models, e.g. sums of exponential decays it might happen that the basis functions become
 /// linearly dependent *for some combinations* of nonlinear model parameters. This isn't great but it is
 /// okay, since the VarPro algorithm in this crate exhibits a degree of robustness against basis functions
-/// becoming collinear (see [SeparableProblemBuilder::epsilon](crate::problem::SeparableProblemBuilder::epsilon)).
+/// becoming collinear. The linear solver backends automatically handle numerical stability by using
+/// appropriate tolerance values for rank determination.
 ///
 /// ### Invariant Basis Functions
 ///

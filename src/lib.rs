@@ -152,7 +152,7 @@
 //! # use varpro::problem::*;
 //! # let problem : varpro::problem::SeparableProblem<SeparableModel<f64>, SingleRhs> = unimplemented!();
 //! use varpro::solvers::levmar::LevMarSolver;
-//! let fit_result = LevMarSolver::default().fit(problem).unwrap();
+//! let fit_result = LevMarSolver::default().solve(problem).unwrap();
 //! ```
 //!
 //! If successful, retrieve the nonlinear parameters `$\alpha$` using the
@@ -160,8 +160,8 @@
 //! coefficients `$\vec{c}$` using [`FitResult::linear_coefficients`](crate::fit::FitResult::linear_coefficients)
 //!
 //! **Fit Statistics:** To get additional statistical information after the fit
-//! has finished, use the [`LevMarSolver::fit_with_statistics`](crate::solvers::levmar::LevMarSolver::fit_with_statistics)
-//! method.
+//! has finished, use [`FitStatistics::try_from`](crate::statistics::FitStatistics::try_from)
+//! on the fit result.
 //!
 //! ```no_run
 //! # use varpro::model::SeparableModel;
@@ -169,7 +169,7 @@
 //! # use varpro::problem::*;
 //! # let problem : varpro::problem::SeparableProblem<SeparableModel<f64>, SingleRhs> = unimplemented!();
 //! # use varpro::solvers::levmar::LevMarSolver;
-//! # let fit_result = LevMarSolver::default().fit(problem).unwrap();
+//! # let fit_result = LevMarSolver::default().solve(problem).unwrap();
 //! let alpha = fit_result.nonlinear_parameters();
 //! let coeff = fit_result.linear_coefficients().unwrap();
 //! ```
@@ -272,7 +272,7 @@
 //!
 //! // 3. Solve using the fitting problem
 //! let fit_result = LevMarSolver::default()
-//!     .fit(problem)
+//!     .solve(problem)
 //!     .expect("fit must succeed");
 //! // the nonlinear parameters after fitting
 //! // they are in the same order as the parameter names given to the model
@@ -353,7 +353,7 @@
 //!
 //! // fit the data
 //! let fit_result = LevMarSolver::default()
-//!                 .fit(problem)
+//!                 .solve(problem)
 //!                 .expect("fit must succeed");
 //! // the nonlinear parameters
 //! let alpha = fit_result.nonlinear_parameters();
@@ -432,7 +432,7 @@
 //!
 //! // fit the data
 //! let fit_result = LevMarSolver::default()
-//!                 .fit(problem)
+//!                 .solve(problem)
 //!                 .expect("fit must succeed");
 //!
 //! // the nonlinear parameters

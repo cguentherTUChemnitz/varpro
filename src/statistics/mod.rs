@@ -37,7 +37,7 @@ pub enum Error<ModelError: std::error::Error> {
 /// This structure contains additional statistical information
 /// about the fit, such as standard errors on the parameters and other useful
 /// information to assess the quality of the fit. It is created by calling
-/// [`LevMarSolver::fit_with_statistics`](crate::solvers::levmar::LevMarSolver::fit_with_statistics).
+/// [`FitStatistics::try_from`](crate::statistics::FitStatistics::try_from) on a fit result.
 ///
 /// # Where is `$R^2$`?
 ///
@@ -255,8 +255,10 @@ where
     ///               .build()
     ///               .unwrap();
     ///
-    /// let (fit_result,fit_statistics) = LevMarSolver::default()
-    ///               .fit_with_statistics(problem)
+    /// let fit_result = LevMarSolver::default()
+    ///               .solve(problem)
+    ///               .unwrap();
+    /// let fit_statistics = varpro::statistics::FitStatistics::try_from(&fit_result)
     ///               .unwrap();
     ///
     /// let best_fit = fit_result.best_fit().unwrap();

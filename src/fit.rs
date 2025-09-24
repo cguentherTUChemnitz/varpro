@@ -9,8 +9,8 @@ use num_traits::Float;
 /// A helper type that contains the fitting problem after the
 /// minimization, as well as a report and some convenience functions.
 ///
-/// This structure is returned by the [`LevMarSolver::fit`](crate::solvers::levmar::LevMarSolver::fit)
-/// and [`LevMarSolver::fit_with_statistics`](crate::solvers::levmar::LevMarSolver::fit_with_statistics) methods.
+/// This structure is returned by the [`LevMarSolver::solve`](crate::solvers::levmar::LevMarSolver::solve)
+/// and other solve methods of [`LevMarSolver`](crate::solvers::levmar::LevMarSolver).
 #[derive(Debug)]
 pub struct FitResult<Model, Rhs: RhsType>
 where
