@@ -1,17 +1,18 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use nalgebra::DMatrix;
-use nalgebra::DVector;
 use nalgebra::Dyn;
 use nalgebra::OVector;
 use nalgebra::U1;
 use pprof::criterion::{Output, PProfProfiler};
 use shared_test_code::models::DoubleExpModelWithConstantOffsetSepModel;
+use shared_test_code::run_minimization_generic;
 use shared_test_code::*;
 use varpro::prelude::SeparableNonlinearModel;
 use varpro::problem::MultiRhs;
 use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
-use varpro::solvers::levmar::LevMarSolver;
+use varpro::solvers::levmar::ColPivQrLinearSolver;
+use varpro::solvers::levmar::SvdSolver;
 
 /// helper struct for the parameters of the double exponential
 #[derive(Clone, PartialEq, Debug)]
@@ -38,20 +39,6 @@ where
         .expect("Building valid problem should not panic")
 }
 
-fn run_minimization_mrhs_svd<Model>(
-    problem: SeparableProblem<Model, MultiRhs>,
-) -> (DVector<f64>, DMatrix<f64>)
-where
-    Model: SeparableNonlinearModel<ScalarType = f64> + std::fmt::Debug,
-{
-    let result = LevMarSolver::default()
-        .solve_with_svd(problem)
-        .expect("fitting must exit successfully");
-    let params = result.nonlinear_parameters();
-    let coeff = result.linear_coefficients().unwrap();
-    (params, coeff.into_owned())
-}
-
 fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
     // see here on comparing functions
     // https://bheisler.github.io/criterion.rs/book/user_guide/comparing_functions.html
@@ -70,7 +57,7 @@ fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
         coeffs: linear_coeffs,
     };
 
-    group.bench_function("Handcrafted Model (MRHS)", |bencher| {
+    group.bench_function("Handcrafted Model with SVD (MRHS)", |bencher| {
         bencher.iter_batched(
             || {
                 build_problem_mrhs(
@@ -78,12 +65,12 @@ fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
                     DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
                 )
             },
-            run_minimization_mrhs_svd,
+            run_minimization_generic::<_, _, SvdSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });
 
-    group.bench_function("Using Model Builder (MRHS)", |bencher| {
+    group.bench_function("Using Model Builder with SVD (MRHS)", |bencher| {
         bencher.iter_batched(
             || {
                 build_problem_mrhs(
@@ -94,7 +81,36 @@ fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
                     ),
                 )
             },
-            run_minimization_mrhs_svd,
+            run_minimization_generic::<_, _, SvdSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("Handcrafted Model with ColPivQr (MRHS)", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem_mrhs(
+                    true_parameters.clone(),
+                    DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
+                )
+            },
+            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("Using Model Builder with ColPivQr (MRHS)", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem_mrhs(
+                    true_parameters.clone(),
+                    get_double_exponential_model_with_constant_offset(
+                        x.clone(),
+                        vec![tau_guess.0, tau_guess.1],
+                    ),
+                )
+            },
+            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });

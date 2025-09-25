@@ -12,10 +12,11 @@ use num_traits::Float;
 /// This structure is returned by the [`LevMarSolver::solve`](crate::solvers::levmar::LevMarSolver::solve)
 /// and other solve methods of [`LevMarSolver`](crate::solvers::levmar::LevMarSolver).
 #[derive(Debug)]
-pub struct FitResult<Model, Rhs: RhsType>
+pub struct FitResult<Model, Rhs>
 where
     Model: SeparableNonlinearModel,
     Model::ScalarType: RealField + Scalar + Float,
+    Rhs: RhsType,
 {
     /// The final state of the fitting problem after the
     /// minimization finished (regardless of whether fitting was successful or not).
@@ -30,6 +31,23 @@ where
     /// and should be queried to see whether the minimization
     /// was considered successful.
     pub minimization_report: MinimizationReport<Model::ScalarType>,
+}
+
+impl<Model, Rhs> FitResult<Model, Rhs>
+where
+    Model: SeparableNonlinearModel,
+    Model::ScalarType: RealField + Scalar + Float,
+    Rhs: RhsType,
+{
+    /// this returns the linear coefficients in matrix form. For a single
+    /// right hand side, this is a matrix with one column. Typically,
+    /// the [`linear_coefficients`] function should be called to get the
+    /// appropriate view for single or multiple right hand sides out of
+    /// the box. This function exists to overcome some limitations on how
+    /// generics work.
+    pub fn linear_coefficients_generic(&self) -> Option<DMatrixView<Model::ScalarType>> {
+        self.linear_coefficients.as_ref().map(|c| c.as_view())
+    }
 }
 
 impl<Model> FitResult<Model, MultiRhs>

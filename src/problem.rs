@@ -11,7 +11,7 @@ pub use builder::SeparableProblemBuilderError;
 /// trait describing the type of right hand side for the problem, meaning either
 /// a single right hand side or multiple right hand sides. The latter implies
 /// global fitting.
-pub trait RhsType {}
+pub trait RhsType: std::fmt::Debug {}
 
 /// This type indicates that the associated problem has a single (vector) right hand side.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

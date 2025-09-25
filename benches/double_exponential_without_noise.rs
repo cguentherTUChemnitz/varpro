@@ -1,7 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use levenberg_marquardt::LeastSquaresProblem;
 use levenberg_marquardt::LevenbergMarquardt;
-use nalgebra::DVector;
 use nalgebra::DefaultAllocator;
 use nalgebra::Dyn;
 use nalgebra::OVector;
@@ -11,12 +10,14 @@ use nalgebra::U1;
 use pprof::criterion::{Output, PProfProfiler};
 use shared_test_code::models::DoubleExpModelWithConstantOffsetSepModel;
 use shared_test_code::models::DoubleExponentialDecayFittingWithOffsetLevmar;
+use shared_test_code::run_minimization_generic;
 use shared_test_code::*;
 use varpro::prelude::SeparableNonlinearModel;
 use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
 use varpro::problem::SingleRhs;
-use varpro::solvers::levmar::LevMarSolver;
+use varpro::solvers::levmar::ColPivQrLinearSolver;
+use varpro::solvers::levmar::SvdSolver;
 
 /// helper struct for the parameters of the double exponential
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -60,20 +61,6 @@ where
         .observations(y)
         .build()
         .expect("Building valid problem should not panic")
-}
-
-fn run_minimization_svd<Model>(
-    problem: SeparableProblem<Model, SingleRhs>,
-) -> (DVector<f64>, DVector<f64>)
-where
-    Model: SeparableNonlinearModel<ScalarType = f64> + std::fmt::Debug,
-{
-    let result = LevMarSolver::default()
-        .solve_with_svd(problem)
-        .expect("fitting must exit successfully");
-    let params = result.nonlinear_parameters();
-    let coeff = result.linear_coefficients().unwrap();
-    (params, coeff.into_owned())
 }
 
 /// solve the problem by using nonlinear least squares with levenberg marquardt
@@ -139,7 +126,7 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
         )
     });
 
-    group.bench_function("Using Model Builder", |bencher| {
+    group.bench_function("Using Model Builder with SVD", |bencher| {
         bencher.iter_batched(
             || {
                 build_problem(
@@ -150,12 +137,12 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
                     ),
                 )
             },
-            run_minimization_svd,
+            run_minimization_generic::<_, _, SvdSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });
 
-    group.bench_function("Handcrafted Model", |bencher| {
+    group.bench_function("Handcrafted Model with SVD", |bencher| {
         bencher.iter_batched(
             || {
                 build_problem(
@@ -163,7 +150,36 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
                     DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
                 )
             },
-            run_minimization_svd,
+            run_minimization_generic::<_, _, SvdSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("Using Model Builder with ColPivQr", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem(
+                    true_parameters,
+                    get_double_exponential_model_with_constant_offset(
+                        x.clone(),
+                        vec![tau_guess.0, tau_guess.1],
+                    ),
+                )
+            },
+            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("Handcrafted Model with ColPivQr", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem(
+                    true_parameters,
+                    DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
+                )
+            },
+            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });
