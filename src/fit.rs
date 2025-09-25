@@ -45,7 +45,7 @@ where
     /// appropriate view for single or multiple right hand sides out of
     /// the box. This function exists to overcome some limitations on how
     /// generics work.
-    pub fn linear_coefficients_generic(&self) -> Option<DMatrixView<Model::ScalarType>> {
+    pub fn linear_coefficients_generic(&self) -> Option<DMatrixView<'_, Model::ScalarType>> {
         self.linear_coefficients.as_ref().map(|c| c.as_view())
     }
 }
@@ -64,7 +64,7 @@ where
     /// The coefficients vectors for the individual
     /// members of the datasets are the colums of the returned matrix. That means
     /// one coefficient vector for each right hand side.
-    pub fn linear_coefficients(&self) -> Option<DMatrixView<Model::ScalarType>> {
+    pub fn linear_coefficients(&self) -> Option<DMatrixView<'_, Model::ScalarType>> {
         self.linear_coefficients.as_ref().map(|c| c.as_view())
     }
 
@@ -92,7 +92,7 @@ where
     /// Convenience function to get the linear coefficients after the fit has
     /// finished. Will return None if there was an error during fitting.
     /// The coefficients are given as a single vector.
-    pub fn linear_coefficients(&self) -> Option<DVectorView<Model::ScalarType>> {
+    pub fn linear_coefficients(&self) -> Option<DVectorView<'_, Model::ScalarType>> {
         let coeff = self.linear_coefficients.as_ref()?;
         debug_assert_eq!(
             coeff.ncols(),

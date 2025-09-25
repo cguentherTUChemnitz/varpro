@@ -98,7 +98,7 @@ where
     ///
     /// This method is for fitting multiple right hand sides, hence the data
     /// matrix is a matrix that contains the right hand sides as columns.
-    pub fn weighted_data(&self) -> MatrixView<Model::ScalarType, Dyn, Dyn> {
+    pub fn weighted_data(&self) -> MatrixView<'_, Model::ScalarType, Dyn, Dyn> {
         self.Y_w.as_view()
     }
 }
@@ -114,7 +114,7 @@ where
     ///
     /// This method is for fitting a single right hand side, hence the data
     /// is a single column vector.
-    pub fn weighted_data(&self) -> VectorView<Model::ScalarType, Dyn> {
+    pub fn weighted_data(&self) -> VectorView<'_, Model::ScalarType, Dyn> {
         debug_assert_eq!(
             self.Y_w.ncols(),
             1,

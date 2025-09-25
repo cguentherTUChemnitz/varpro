@@ -217,7 +217,7 @@ where
                     let Ut_DkC = &U_t * &dkc_shaped_jacobian;
                     // then use gemm to calculate the full result according
                     // to the formula above
-                    dkc_shaped_jacobian.gemm(one, &U, &Ut_DkC, -one);
+                    dkc_shaped_jacobian.gemm(one, U, &Ut_DkC, -one);
                 } else {
                     // formula: j_k = vec( (U * (&U_t * (&Dk)) - Dk) * linear_coefficients)
                     // even using this version without gemm and mul_to is
@@ -229,9 +229,9 @@ where
                     // intermediate result
                     let Ut_Dk = &U_t * &Dk;
                     let mut Dk = Dk;
-                    Dk.gemm(one, &U, &Ut_Dk, -one);
+                    Dk.gemm(one, U, &Ut_Dk, -one);
                     // now Dk contains the result of (U * (&U_t * (&Dk)) - Dk)
-                    Dk.mul_to(&linear_coefficients, &mut dkc_shaped_jacobian);
+                    Dk.mul_to(linear_coefficients, &mut dkc_shaped_jacobian);
                 };
 
                 //for non-approximate jacobian we require our scalar type to be a real field (or maybe we can finagle it with clever trait bounds)

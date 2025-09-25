@@ -196,7 +196,7 @@ where
                 .gemm(
                     Model::ScalarType::from_i8(-1).unwrap(),
                     &Dk,
-                    &linear_coefficients,
+                    linear_coefficients,
                     Model::ScalarType::from_i8(0).unwrap(),
                 );
 
