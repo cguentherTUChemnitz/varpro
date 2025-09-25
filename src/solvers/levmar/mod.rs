@@ -23,7 +23,7 @@ pub use levmar_problem::LevMarProblem;
 pub use levmar_problem::LevMarProblemCpQr;
 pub use levmar_problem::LevMarProblemSvd;
 pub use levmar_problem::LinearSolver;
-pub use levmar_problem::SvdSolver;
+pub use levmar_problem::SvdLinearSolver;
 
 /// A thin wrapper around the
 /// [`LevenbergMarquardt`](https://docs.rs/levenberg-marquardt/latest/levenberg_marquardt/struct.LevenbergMarquardt.html)

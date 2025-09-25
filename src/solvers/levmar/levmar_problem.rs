@@ -10,7 +10,7 @@ mod svd;
 pub mod colpiv_qr;
 
 pub use colpiv_qr::ColPivQrLinearSolver;
-pub use svd::SvdSolver;
+pub use svd::SvdLinearSolver;
 
 #[allow(type_alias_bounds)]
 /// levmar problem where the linear part is solved via column pivoted QR
@@ -21,7 +21,7 @@ pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> =
 
 #[allow(type_alias_bounds)]
 pub type LevMarProblemSvd<Model: SeparableNonlinearModel, Rhs> =
-    LevMarProblem<Model, Rhs, SvdSolver<Model::ScalarType>>;
+    LevMarProblem<Model, Rhs, SvdLinearSolver<Model::ScalarType>>;
 
 #[derive(Debug)]
 pub struct LevMarProblem<Model, Rhs, Solver>
@@ -76,7 +76,7 @@ pub trait LinearSolver: std::fmt::Debug + sealed::Sealed {
 }
 
 impl<ScalarType: ComplexField> sealed::Sealed for ColPivQrLinearSolver<ScalarType> {}
-impl<ScalarType: ComplexField> sealed::Sealed for SvdSolver<ScalarType> {}
+impl<ScalarType: ComplexField> sealed::Sealed for SvdLinearSolver<ScalarType> {}
 
 pub mod sealed {
     pub trait Sealed {}

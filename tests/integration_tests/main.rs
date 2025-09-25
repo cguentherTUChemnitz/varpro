@@ -19,7 +19,7 @@ use varpro::problem::{MultiRhs, SeparableProblemBuilder, SingleRhs};
 use varpro::solvers::levmar::*;
 use varpro::statistics::FitStatistics;
 
-type SvdSolverF64 = SvdSolver<f64>;
+type SvdSolverF64 = SvdLinearSolver<f64>;
 type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
 
 #[test]

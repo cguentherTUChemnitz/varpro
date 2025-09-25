@@ -9,7 +9,7 @@ use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::Mul;
 
 #[derive(Debug, Clone)]
-pub struct SvdSolver<ScalarType>
+pub struct SvdLinearSolver<ScalarType>
 where
     ScalarType: Scalar + ComplexField,
 {
@@ -21,7 +21,7 @@ where
     pub(crate) linear_coefficients: DMatrix<ScalarType>,
 }
 
-impl<ScalarType> LinearSolver for SvdSolver<ScalarType>
+impl<ScalarType> LinearSolver for SvdLinearSolver<ScalarType>
 where
     ScalarType: Scalar + ComplexField,
 {
@@ -33,7 +33,7 @@ where
 }
 
 impl<Model, Rhs: RhsType> LeastSquaresProblem<Model::ScalarType, Dyn, Dyn>
-    for LevMarProblem<Model, Rhs, SvdSolver<Model::ScalarType>>
+    for LevMarProblem<Model, Rhs, SvdLinearSolver<Model::ScalarType>>
 where
     Model::ScalarType: Scalar + ComplexField + Copy,
     <Model::ScalarType as ComplexField>::RealField: Float + Zero,
@@ -101,7 +101,7 @@ where
         let current_residuals = &self.separable_problem.Y_w - Phi_w * &linear_coefficients;
 
         // if everything was successful, update the cached calculations, otherwise set the cache to none
-        self.cached = Some(SvdSolver {
+        self.cached = Some(SvdLinearSolver {
             current_residuals,
             decomposition: current_svd,
             linear_coefficients,
@@ -138,7 +138,7 @@ where
         // TODO (Performance): make this more efficient by parallelizing
         // but remember that just slapping rayon on the column_iter DOES NOT
         // make it more efficient
-        let SvdSolver {
+        let SvdLinearSolver {
             current_residuals: _,
             decomposition,
             linear_coefficients,
