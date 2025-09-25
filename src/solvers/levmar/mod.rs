@@ -83,7 +83,7 @@ where
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using column-pivoted QR decomposition, which is typically faster
     /// than SVD, while also exhibiting very good numerical stability, even
-    /// for ill-conditioned problem.
+    /// for ill-conditioned problems.
     pub fn solve_with_cpqr<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -133,7 +133,7 @@ where
         self.solve_with_svd(problem)
     }
 
-    /// use [`solve`] instead.
+    /// use [`solve`](Self::solve) instead.
     #[allow(clippy::result_large_err)]
     #[deprecated(since = "0.14.0", note = "use the solve method instead")]
     pub fn fit<Rhs: RhsType>(

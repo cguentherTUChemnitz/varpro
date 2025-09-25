@@ -109,7 +109,7 @@ let problem = SeparableProblemBuilder::new(model)
   .unwrap();
 // 3. Solve the fitting problem
 let fit_result = LevMarSolver::default()
-    .fit(problem)
+    .solve(problem)
     .expect("fit must exit successfully");
 // 4. obtain the nonlinear parameters after fitting
 let alpha = fit_result.nonlinear_parameters();
@@ -123,7 +123,7 @@ For more in-depth examples, please refer to the crate documentation.
 
 Additionally to the [`solve`](https://docs.rs/varpro/latest/varpro/solvers/levmar/struct.LevMarSolver.html#method.solve) member function,
 you can calculate additional statistical information by using [`FitStatistics::try_from`](https://docs.rs/varpro/latest/varpro/statistics/struct.FitStatistics.html#impl-TryFrom%3C%26FitResult%3CModel%2C+SingleRhs%3E%3E-for-FitStatistics%3CModel%3E)
-on the fit result to get additional statistical information.
+on the fit result.
 
 ### Global Fitting of Multiple Right Hand Sides
 

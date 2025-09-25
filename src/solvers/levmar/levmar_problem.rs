@@ -29,7 +29,7 @@ pub type LevMarProblemSvd<Model: SeparableNonlinearModel, Rhs> =
 /// into a problem that can be solved with the `LevMarSolver`. It does so by
 /// combining the separable problem with a linear solver backend. A user
 /// typically won't have to interact directly with this struct unless they
-/// are using the generic interface of the [`LevMarSolver`].
+/// are using the generic interface of the [`LevMarSolver`](crate::solvers::levmar::LevMarSolver).
 pub struct LevMarProblem<Model, Rhs, Solver>
 where
     Model::ScalarType: Scalar + ComplexField + Copy,

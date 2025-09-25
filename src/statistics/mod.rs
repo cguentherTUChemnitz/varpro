@@ -53,7 +53,7 @@ pub enum Error<ModelError: std::error::Error> {
 ///
 /// # Model Selection and Evaluation
 ///
-/// If you want to want to use goodness of fit metrics to decide which of two
+/// If you want to use goodness of fit metrics to decide which of two
 /// models to use, please look into the [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion),
 /// or the [Bayesian information criterion](https://en.wikipedia.org/wiki/Bayesian_information_criterion).
 /// Both of these can be calculated from standard error of the regression. Note

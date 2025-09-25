@@ -41,7 +41,7 @@ where
 {
     /// this returns the linear coefficients in matrix form. For a single
     /// right hand side, this is a matrix with one column. Typically,
-    /// the [`linear_coefficients`] function should be called to get the
+    /// the [`linear_coefficients`](Self::linear_coefficients) function should be called to get the
     /// appropriate view for single or multiple right hand sides out of
     /// the box. This function exists to overcome some limitations on how
     /// generics work.
