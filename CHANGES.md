@@ -3,6 +3,47 @@
 This is the changelog for the `varpro` library.
 See also here for a [version history](https://crates.io/crates/varpro/versions).
 
+## 0.14.0
+
+This release contains **breaking changes** due to a major refactor that introduces multiple linear
+solver backends and significant performance improvements.
+
+### New Features
+* **Multiple Linear Solver Backends**: Added support for different linear algebra backends:
+  - `ColPivQrLinearSolver`: Column-pivoted QR decomposition using nalgebra-lapack (requires lapack feature flags)
+  - `SvdLinearSolver`: SVD decomposition (i.e. the functionality that was previously available)
+  - New `LinearSolver` trait to abstract over different solver implementations
+* **Performance Improvements**: Significant optimizations especially for single right-hand side problems using QR decomposition
+
+### Breaking Changes
+* **API Changes**:
+  - Replaced `LevMarSolver::fit()` method with `LevMarSolver::solve()`
+  - Removed `LevMarSolver::fit_with_statistics()` method
+  - Fit statistics now generated using `FitStatistics::try_from()` on fit results
+* **Dependency Updates**:
+  - Updated nalgebra from 0.33 to 0.34
+  - Updated levenberg-marquardt from 0.14 to 0.15
+
+### Internal Refactoring
+* **New Architecture**: Introduced `LevMarProblem` as an intermediate struct that combines `SeparableProblem` with linear solver backends
+* **Modular Design**: Factored out linear solver implementations into separate modules:
+  - `src/solvers/levmar/levmar_problem/colpiv_qr.rs`
+  - `src/solvers/levmar/levmar_problem/svd.rs`
+* **Generic Testing**: Enhanced test suite to work generically across different solver types
+* **Code Organization**: Major restructuring of solver interfaces and internal abstractions
+
+### Migration Guide
+* Replace calls to `solver.fit(problem)` with `solver.solve(problem)`
+* Replace `solver.fit_with_statistics(problem)` with:
+  ```rust
+  let fit_result = solver.solve(problem)?;
+  let statistics = FitStatistics::try_from(fit_result)?;
+  ```
+
+## 0.13.3
+
+* Small, but noticeable performance improvements
+
 ## 0.13.2 (AI assisted)
 
 * Improved documentation clarity and fixed inconsistencies between code and documentation
@@ -34,7 +75,7 @@ to be cleaner. It also contains performance improvements.
 * Removed parallel computations as they didn't prove to be faster. I'll revisit
   this some time in the future.
 * Reworked generics to use typestates (`Rhs: RhsType`) for right-hand-sidedness
-  of the problem, rather than const generics (`const MRHS: bool`). 
+  of the problem, rather than const generics (`const MRHS: bool`).
 * Refactor: rename `LevMarProblem` to `SeparableProblem` and place it into its own
   `vapro::problem` module. Also renamed `LevMarProblemBuilder` to
   `SeparableProblemBuilder`.
@@ -76,7 +117,7 @@ Documentation updates
 ## 0.9.0
 
 - We can now calculate confidence bands using via `FitStatistics`. Only available
-for problems with a single RHS, though. 
+for problems with a single RHS, though.
 - The API for calculating the correlation matrix changed to on-the-fly
 calculations, deprecated (a drop-in replacement) for the old API.
 - Cleaner separation (API changes) for problems with single and multiple right
@@ -101,12 +142,12 @@ side column of the observation matrix.
 - Deprecate the `minimize` function of the LevMarSolver and
 replace it with `fit`, with a slightly different API.
 - Add a function `fit_with_statistics` and a `statistics` module
-that calculates additional statistical information about the fit 
+that calculates additional statistical information about the fit
 (if successful). It allows us to extract the estimated standard
 errors of the model parameters (both linear and nonlinear) but also
 provides more complete information like the covariance matrix and
 the correlation matrix.
-- add more exhaustive tests 
+- add more exhaustive tests
 - add original varpro matlab code from DP O'Leary and BW Rust
 with permission
 - bump benchmarking dependencies
