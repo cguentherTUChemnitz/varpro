@@ -10,7 +10,7 @@ solver backends and significant performance improvements.
 
 ### New Features
 * **Multiple Linear Solver Backends**: Added support for different linear algebra backends:
-  - `ColPivQrLinearSolver`: Column-pivoted QR decomposition using nalgebra-lapack (requires lapack feature flags)
+  - `ColPivQrLinearSolver`: Column-pivoted QR decomposition using nalgebra-lapack (requires `lapack` feature)
   - `SvdLinearSolver`: SVD decomposition (i.e. the functionality that was previously available)
   - New `LinearSolver` trait to abstract over different solver implementations
 * **Performance Improvements**: Significant optimizations especially for single right-hand side problems using QR decomposition
@@ -23,6 +23,7 @@ solver backends and significant performance improvements.
 * **Dependency Updates**:
   - Updated nalgebra from 0.33 to 0.34
   - Updated levenberg-marquardt from 0.14 to 0.15
+  - Added nalgebra-lapack 0.26 as optional dependency (behind `lapack` feature)
 
 ### Internal Refactoring
 * **New Architecture**: Introduced `LevMarProblem` as an intermediate struct that combines `SeparableProblem` with linear solver backends

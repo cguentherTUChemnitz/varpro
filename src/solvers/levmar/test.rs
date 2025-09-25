@@ -19,8 +19,13 @@ use nalgebra::{DMatrix, DVector, Owned};
 // the finite difference and make one of the taus zero, which means 1/tau diverges. I don't know
 // exactly why it stalls though. This seems like bad behavior.
 type SvdSolverF64 = SvdLinearSolver<f64>;
+#[cfg(feature = "lapack")]
 type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted<Solver>()
 where
     Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>,
@@ -58,7 +63,11 @@ where
     assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-5);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // I am implementing my own test that checks if my jacobian and residual calculations are
 // correct even for params far away from the true tau1, tau2.
 // What I am doing is to numerically differentiate the residual sum of squares using my own
@@ -156,11 +165,16 @@ impl ResidualCorrectnes for SvdSolverF64 {
     const EXPECT_VECTOR_CORRECT: bool = true;
 }
 
+#[cfg(feature = "lapack")]
 impl ResidualCorrectnes for CpqrSolverF64 {
     const EXPECT_VECTOR_CORRECT: bool = false;
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn residuals_are_calculated_correctly_unweighted<Solver>()
 where
     Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>
@@ -240,7 +254,11 @@ where
     }
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn residuals_are_calculated_correctly_with_weights<Solver>()
 where
     Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>

@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::problem::SeparableProblem;
 use crate::util::Weights;
 use nalgebra::{ComplexField, DMatrix, Dyn, OMatrix, OVector, RealField, Scalar};
-use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
+
 use num_traits::{float::TotalOrder, Float, Zero};
 use std::ops::Mul;
 use thiserror::Error as ThisError;
@@ -253,8 +253,7 @@ where
     #[allow(non_snake_case)]
     pub fn build(self) -> Result<SeparableProblem<Model, Rhs>, SeparableProblemBuilderError>
     where
-        // TODO QR/SVD
-        Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
+        Model::ScalarType: Float + RealField + TotalOrder,
     {
         // and assign the defaults to the values we don't have
         let Y = self.Y.ok_or(SeparableProblemBuilderError::YDataMissing)?;
@@ -276,26 +275,17 @@ where
         }
 
         if !weights.is_size_correct_for_data_length(Y.nrows()) {
-            //check that weights have correct length if they were given
             return Err(SeparableProblemBuilderError::InvalidLengthOfWeights);
         }
 
-        //now that we have valid inputs, construct the levmar problem
-        // 1) create weighted data
-        #[allow(non_snake_case)]
         let Y_w = &weights * Y;
 
-        // 2) initialize the levmar problem. Some field values are dummy initialized
-        // (like the SVD) because they are calculated in step 3 as part of set_params
-        let problem = SeparableProblem {
-            // these parameters all come from the builder
+        Ok(SeparableProblem {
             Y_w,
             model,
             weights,
             phantom: Default::default(),
-        };
-
-        Ok(problem)
+        })
     }
 }
 // make available for testing and doc tests

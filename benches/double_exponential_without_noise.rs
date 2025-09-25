@@ -16,6 +16,7 @@ use varpro::prelude::SeparableNonlinearModel;
 use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
 use varpro::problem::SingleRhs;
+#[cfg(feature = "lapack")]
 use varpro::solvers::levmar::ColPivQrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 
@@ -155,6 +156,7 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
         )
     });
 
+    #[cfg(feature = "lapack")]
     group.bench_function("Using Model Builder with ColPivQr", |bencher| {
         bencher.iter_batched(
             || {
@@ -171,6 +173,7 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
         )
     });
 
+    #[cfg(feature = "lapack")]
     group.bench_function("Handcrafted Model with ColPivQr", |bencher| {
         bencher.iter_batched(
             || {

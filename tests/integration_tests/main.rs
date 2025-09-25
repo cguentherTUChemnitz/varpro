@@ -20,6 +20,7 @@ use varpro::solvers::levmar::*;
 use varpro::statistics::FitStatistics;
 
 type SvdSolverF64 = SvdLinearSolver<f64>;
+#[cfg(feature = "lapack")]
 type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
 
 #[test]
@@ -93,7 +94,11 @@ fn sanity_check_jacobian_of_levenberg_marquardt_problem_mrhs_is_correct() {
     assert_relative_eq!(jacobian_numerical, jacobian_trait, epsilon = 1e-4);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_fitting_without_noise_produces_accurate_results_impl<Solver>()
 where
     Solver: LinearSolver<ScalarType = f64>,
@@ -169,7 +174,11 @@ where
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_fitting_without_noise_produces_accurate_results_with_handrolled_model_impl<
     Solver,
 >()
@@ -416,7 +425,11 @@ fn double_exponential_model_with_levenberg_marquardt_mrhs_produces_accurate_resu
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 #[allow(non_snake_case)]
 fn double_exponential_model_with_handrolled_model_mrhs_produces_accurate_results_impl<Solver>()
 where
@@ -496,7 +509,11 @@ where
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 #[allow(non_snake_case)]
 fn triple_exponential_model_with_mrhs_produces_accurate_results_with_more_data_cols_than_params_impl<
     Solver,
@@ -598,7 +615,11 @@ where
     assert_relative_eq!(tau2, tau2_calc, epsilon = 1e-8);
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<Solver>()
 where
     Solver: LinearSolver<ScalarType = f64>,
@@ -675,7 +696,11 @@ where
     );
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<
     Solver,
 >()
@@ -787,7 +812,11 @@ fn read_vec_f64(path: impl AsRef<std::path::Path>, size_hint: Option<usize>) -> 
     vect
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // this also tests the correct application of weights
 fn oleary_example_with_handrolled_model_produces_correct_results_impl<Solver>()
 where
@@ -911,7 +940,11 @@ where
     );
 }
 
-#[typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)]
+#[cfg_attr(
+    feature = "lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+)]
+#[cfg_attr(not(feature = "lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // this also tests the correct application of weights
 fn test_oleary_example_with_separable_model_impl<Solver>()
 where

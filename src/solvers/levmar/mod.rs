@@ -7,10 +7,11 @@ use levenberg_marquardt::LeastSquaresProblem;
 // pub use levenberg_marquardt::LevenbergMarquardt as LevMarSolver;
 use levenberg_marquardt::LevenbergMarquardt;
 use nalgebra::{ComplexField, Dyn, RealField, Scalar};
+#[cfg(feature = "lapack")]
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
+#[cfg(feature = "lapack")]
 use num_traits::float::TotalOrder;
 use num_traits::{Float, FromPrimitive};
-
 #[cfg(any(test, doctest))]
 mod test;
 
@@ -18,8 +19,10 @@ mod test;
 // Maybe we'll make this module public, but for now I feel this would make
 // the API more complicated.
 mod levmar_problem;
+#[cfg(feature = "lapack")]
 pub use levmar_problem::ColPivQrLinearSolver;
 pub use levmar_problem::LevMarProblem;
+#[cfg(feature = "lapack")]
 pub use levmar_problem::LevMarProblemCpQr;
 pub use levmar_problem::LevMarProblemSvd;
 pub use levmar_problem::LinearSolver;
@@ -79,11 +82,14 @@ where
         }
     }
 
+    #[cfg(feature = "lapack")]
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using column-pivoted QR decomposition, which is typically faster
     /// than SVD, while also exhibiting very good numerical stability, even
     /// for ill-conditioned problems.
+    ///
+    /// **Note**: This method requires the `lapack` feature to be enabled.
     pub fn solve_with_cpqr<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -143,7 +149,6 @@ where
     where
         Model: SeparableNonlinearModel,
         Model::ScalarType: Scalar + ComplexField + RealField + Float + FromPrimitive,
-        Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
     {
         self.solve_with_svd(problem)
     }
