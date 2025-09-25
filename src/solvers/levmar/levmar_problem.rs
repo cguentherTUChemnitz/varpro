@@ -13,17 +13,23 @@ pub use colpiv_qr::ColPivQrLinearSolver;
 pub use svd::SvdLinearSolver;
 
 #[allow(type_alias_bounds)]
-/// levmar problem where the linear part is solved via column pivoted QR
-/// decomposition.
-//TODO expose only on lapack feature
+/// type alias for a [`LevMarProblem`] using the column-pivoted QR decomposition
+/// as the linear solver backend.
 pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> =
     LevMarProblem<Model, Rhs, ColPivQrLinearSolver<Model::ScalarType>>;
 
 #[allow(type_alias_bounds)]
+/// type alias for a [`LevMarProblem`] using the SVD decomposition as
+/// the linear solver backend.
 pub type LevMarProblemSvd<Model: SeparableNonlinearModel, Rhs> =
     LevMarProblem<Model, Rhs, SvdLinearSolver<Model::ScalarType>>;
 
 #[derive(Debug)]
+/// This is an intermediate struct that transforms a [`SeparableProblem`]
+/// into a problem that can be solved with the `LevMarSolver`. It does so by
+/// combining the separable problem with a linear solver backend. A user
+/// typically won't have to interact directly with this struct unless they
+/// are using the generic interface of the [`LevMarSolver`].
 pub struct LevMarProblem<Model, Rhs, Solver>
 where
     Model::ScalarType: Scalar + ComplexField + Copy,

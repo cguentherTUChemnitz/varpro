@@ -30,6 +30,7 @@ pub enum Error<ModelError: std::error::Error> {
     /// Failed to calculate the inverse of a matrix
     #[error("Matrix inversion error")]
     MatrixInversion,
+    /// failed to calculate linear coefficients
     #[error("Failed to calculate linear coefficients")]
     LinearCoeffs,
 }

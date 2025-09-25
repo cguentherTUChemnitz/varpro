@@ -9,6 +9,18 @@ use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::Mul;
 
 #[derive(Debug, Clone)]
+/// A solver for the linear subproblem in variable projection that uses
+/// singular value decomposition to calculate the linear solution. It is well
+/// equipped to deal with numerically difficult problems that might become
+/// rank deficient during the optimization. The high numerical stability
+/// means that it will suffer in performance compared to other solvers in
+/// this crate, but it is a good default choice and varpro with SVD will
+/// outperform pure nonlinear optimizers any day of the week.
+///
+/// # Details
+///
+/// The solver uses the singular value decomposition with a Kaufmann approximation
+/// for the derivatives as described [here](https://geo-ant.github.io/blog/2020/variable-projection-part-1-fundamentals/).
 pub struct SvdLinearSolver<ScalarType>
 where
     ScalarType: Scalar + ComplexField,

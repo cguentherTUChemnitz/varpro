@@ -48,6 +48,11 @@ where
     }
 
     #[allow(clippy::result_large_err)]
+    /// generic interface to solve an instance of [`SeparableProblem`] using
+    /// variable projection. The [`SeparableProblem`] has to be converted into
+    /// a [`LevMarProblem`] first. This struct also exposes convenience methods
+    /// that accept [`SeparableProblem`] instances directly, which do the conversions
+    /// internally.
     pub fn solve_generic<Rhs: RhsType, Solver: LinearSolver<ScalarType = Model::ScalarType>>(
         &self,
         problem: LevMarProblem<Model, Rhs, Solver>,
@@ -75,6 +80,10 @@ where
     }
 
     #[allow(clippy::result_large_err)]
+    /// Solve the given separable problem with VarPro with a linear solver
+    /// backend using column-pivoted QR decomposition, which is typically faster
+    /// than SVD, while also exhibiting very good numerical stability, even
+    /// for ill-conditioned problem.
     pub fn solve_with_cpqr<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -95,6 +104,9 @@ where
     }
 
     #[allow(clippy::result_large_err)]
+    /// Solve the given separable problem with VarPro with a linear solver
+    /// backend using singular value decomposition (SVD), which exhibits
+    /// excellent numerical stability, even for ill-conditioned problems.
     pub fn solve_with_svd<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
@@ -121,18 +133,7 @@ where
         self.solve_with_svd(problem)
     }
 
-    /// Try to solve the given varpro minimization problem. The parameters of
-    /// the problem which are set when this function is called are used as the initial guess
-    ///
-    /// # Returns
-    ///
-    /// On success, returns an Ok value containing the fit result, which contains
-    /// the final state of the problem as well as some convenience functions that
-    /// allow to query the optimal parameters. Note that success of failure is
-    /// determined from the minimization report. A successful result might still
-    /// correspond to a failed minimization in some cases.
-    /// On failure (when the minimization was not deemeed successful), returns
-    /// an error with the same information as in the success case.
+    /// use [`solve`] instead.
     #[allow(clippy::result_large_err)]
     #[deprecated(since = "0.14.0", note = "use the solve method instead")]
     pub fn fit<Rhs: RhsType>(
