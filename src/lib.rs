@@ -141,11 +141,25 @@
 //! ```
 //!
 //! The third step is to use a solver to fit the model to the problem.
-//! Currently, the only available solver is the
-//! [Levenberg-Marquardt](https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm) algorithm
-//! using the [levenberg_marquardt](https://crates.io/crates/levenberg-marquardt/) crate.
-//! It is provided via the [`LevMarSolver`](crate::solvers::levmar::LevMarSolver)
-//! type, which allows us to make additional configurations to the solver.
+//! The solver uses the [Levenberg-Marquardt](https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm) algorithm
+//! from the [levenberg_marquardt](https://crates.io/crates/levenberg-marquardt/) crate with multiple
+//! linear algebra backends for the linear sub-problems. It is provided via the [`LevMarSolver`](crate::solvers::levmar::LevMarSolver)
+//! type, which supports different linear solver backends.
+//!
+//! ## Solver Methods
+//!
+//! The [`LevMarSolver`](crate::solvers::levmar::LevMarSolver) provides several methods:
+//! - [`solve`](crate::solvers::levmar::LevMarSolver::solve): Uses SVD decomposition (default, always available)
+//! - [`solve_with_svd`](crate::solvers::levmar::LevMarSolver::solve_with_svd): Explicitly use SVD decomposition
+//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use column-pivoted QR decomposition (requires `lapack` feature)
+//!
+//! **Performance Note:** The column-pivoted QR method often provides better performance,
+//! especially for single right-hand side problems, but requires the `lapack` feature:
+//!
+//! ```toml
+//! [dependencies]
+//! varpro = { version = "0.14", features = ["lapack"] }
+//! ```
 //!
 //! ```no_run
 //! # use varpro::model::*;

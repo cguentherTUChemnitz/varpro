@@ -30,8 +30,9 @@ pub use levmar_problem::SvdLinearSolver;
 
 /// A thin wrapper around the
 /// [`LevenbergMarquardt`](https://docs.rs/levenberg-marquardt/latest/levenberg_marquardt/struct.LevenbergMarquardt.html)
-/// solver from the `levenberg_marquardt` crate. The core benefit of this
-/// wrapper is that we can also use it to calculate statistics.
+/// solver from the `levenberg_marquardt` crate. This wrapper provides multiple
+/// linear solver backends for the linear sub-problems and enables additional
+/// functionality like statistics calculation.
 #[derive(Debug)]
 pub struct LevMarSolver<Model>
 where
@@ -126,8 +127,12 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    /// just an alias for [Self::solve_with_svd], which is a reasonable general
-    /// purpose default solver.
+    /// Solve the separable problem using the default SVD-based linear solver.
+    ///
+    /// This is an alias for [`solve_with_svd`](Self::solve_with_svd) and provides
+    /// a reasonable general-purpose default that works in all cases without requiring
+    /// additional features. For potentially better performance, consider using
+    /// [`solve_with_cpqr`](Self::solve_with_cpqr) if the `lapack` feature is available.
     pub fn solve<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,
