@@ -22,7 +22,8 @@ lapack = ["nalgebra-lapack"]
 thiserror = "1"
 levenberg-marquardt = "0.15"
 nalgebra = { version = "0.34", features = []}
-nalgebra-lapack = { version = "0.26", default-features = false, features = ["intel-mkl"], optional = true }
+# TODO BEFORE PUBLISH configure features correctly depending on lapack backend
+nalgebra-lapack = { version = "0.26", optional = true }
 num-traits = "0.2"
 distrs = "0.2"
 
