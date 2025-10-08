@@ -12,18 +12,31 @@ categories = ["mathematics", "science", "algorithms"]
 keywords = ["nonlinear", "regression", "function", "fitting", "least-squares"]
 
 [workspace]
-members = ["shared_test_code"]
+members = [".","shared_test_code"]
 
 [features]
 default = []
-lapack = ["nalgebra-lapack"]
+# don't set this feature externally. It's used internally to flag that a
+# lapack dependency was enabled.
+__lapack = []
+
+# these flags mirror the lapack flags that we can pass to nalgebra-lapack
+# and will select the backend accordingly.
+lapack-netlib = ["__lapack", "nalgebra-lapack/lapack-netlib"]
+lapack-mkl = ["__lapack", "lapack-mkl-static-seq"]
+lapack-mkl-static-seq = ["__lapack", "nalgebra-lapack/lapack-mkl-static-seq"]
+lapack-mkl-static-par = ["__lapack", "nalgebra-lapack/lapack-mkl-static-par"]
+lapack-mkl-dynamic-seq = ["__lapack", "nalgebra-lapack/lapack-mkl-dynamic-seq"]
+lapack-mkl-dynamic-par = ["__lapack", "nalgebra-lapack/lapack-mkl-dynamic-par"]
+lapack-openblas = ["__lapack", "nalgebra-lapack/lapack-openblas"]
+lapack-accelerate = ["__lapack", "nalgebra-lapack/lapack-accelerate"]
+lapack-custom = ["__lapack","nalgebra-lapack/lapack-custom"]
 
 [dependencies]
 thiserror = "1"
 levenberg-marquardt = "0.15"
 nalgebra = { version = "0.34", features = []}
-# TODO BEFORE PUBLISH configure features correctly depending on lapack backend
-nalgebra-lapack = { version = "0.26", optional = true }
+nalgebra-lapack = { version = "0.26", default-features = false, optional = true}
 num-traits = "0.2"
 distrs = "0.2"
 
@@ -54,6 +67,5 @@ rustdoc-args = ["--html-in-header", "katex-header.html"]
 
 # TODO TODO TODO remove this before publish
 [patch.crates-io]
-nalgebra-lapack = {path = "../nalgebra/nalgebra-lapack"}
 nalgebra = {path = "../nalgebra"}
-lapack-src = {path = "../lapack-src"}
+nalgebra-lapack = {path = "../nalgebra/nalgebra-lapack"}

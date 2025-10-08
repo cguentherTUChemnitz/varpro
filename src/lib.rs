@@ -151,10 +151,11 @@
 //! The [`LevMarSolver`](crate::solvers::levmar::LevMarSolver) provides several methods:
 //! - [`solve`](crate::solvers::levmar::LevMarSolver::solve): Uses SVD decomposition (default, always available)
 //! - [`solve_with_svd`](crate::solvers::levmar::LevMarSolver::solve_with_svd): Explicitly use SVD decomposition
-//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use column-pivoted QR decomposition (requires `lapack` feature)
+//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use column-pivoted QR decomposition (requires one of the `lapack-*` features)
 //!
 //! **Performance Note:** The column-pivoted QR method often provides better performance,
-//! especially for single right-hand side problems, but requires the `lapack` feature:
+//! especially for single right-hand side problems, but requires one of the `lapack-*` features,
+//! see the note on lapack features below.
 //!
 //! ```toml
 //! [dependencies]
@@ -468,6 +469,33 @@
 //! observation. Since the linear coefficients are allowed to vary, they now
 //! also become a matrix instead of a single vector. Each column corresponds to
 //! the best fit linear coefficients of the observations in the same matrix column.
+//!
+//! # LAPACK backends
+//!
+//! This crate exposes a couple of features to choose a LAPACK backend. Only
+//! one (or none) of the features must be enabled:
+//!
+//! * lapack-netlib: Use the bundled netlib implementation from
+//!   the [`netlib-src`](https://crates.io/crates/netlib-src) crate. Useful
+//!   during development, but will typically perform measurably worse than
+//!   the other backends.
+//! * lapack-mkl: Alias for `lapack-mkl-static-seq` and a good default for MKL.
+//! * lapack-mkl-static-seq: Link the _sequential_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _statically_.
+//! * lapack-mkl-static-par: Link the _parallel_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _statically_.
+//! * lapack-mkl-dynamic-seq: Link the _sequential_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _dynamically_.
+//! * lapack-mkl-dynamic-par: Link the _parallel_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _dynamically_.
+//! * lapack-openblas: Use [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS)
+//!   as the LAPACK backend.
+//! * lapack-accelerate: Use Apple's [Accelerate Framework](https://developer.apple.com/documentation/accelerate).
+//! * `lapack-custom`: Use a custom lapack backend whose functions must be
+//!   available at linktime. It is your responsibility to make sure those are
+//!   ABI compatible to the function signatures in the [`lapack`](https://crates.io/crates/lapack)
+//!   crate.
+//!
 //!
 //! # References and Further Reading
 //!

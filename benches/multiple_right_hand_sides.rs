@@ -11,7 +11,7 @@ use varpro::prelude::SeparableNonlinearModel;
 use varpro::problem::MultiRhs;
 use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::ColPivQrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 
@@ -87,7 +87,7 @@ fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
         )
     });
 
-    #[cfg(feature = "lapack")]
+    #[cfg(feature = "__lapack")]
     group.bench_function("Handcrafted Model with ColPivQr (MRHS)", |bencher| {
         bencher.iter_batched(
             || {
@@ -101,7 +101,7 @@ fn bench_double_exp_no_noise_mrhs(c: &mut Criterion) {
         )
     });
 
-    #[cfg(feature = "lapack")]
+    #[cfg(feature = "__lapack")]
     group.bench_function("Using Model Builder with ColPivQr (MRHS)", |bencher| {
         bencher.iter_batched(
             || {

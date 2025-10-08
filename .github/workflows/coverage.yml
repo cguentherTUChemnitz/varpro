@@ -23,7 +23,7 @@ jobs:
 
       - name: Generate code coverage
         run: |
-          cargo tarpaulin --force-clean --verbose --all-features --engine llvm --timeout 120 --out Lcov --exclude-files "benches/*"
+          cargo tarpaulin --force-clean --verbose --features lapack-netlib --engine llvm --timeout 120 --out Lcov --exclude-files "benches/*"
           # cargo +nightly tarpaulin --force-clean --verbose --all-features --engine llvm --timeout 120 --out Lcov --exclude-files "benches/*"
 
       - name: upload to Coveralls

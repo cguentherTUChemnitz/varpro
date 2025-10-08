@@ -6,14 +6,14 @@ use levenberg_marquardt::LeastSquaresProblem;
 use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, Scalar};
 mod svd;
 
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 pub mod colpiv_qr;
 
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 pub use colpiv_qr::ColPivQrLinearSolver;
 pub use svd::SvdLinearSolver;
 
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 #[allow(type_alias_bounds)]
 /// type alias for a [`LevMarProblem`] using the column-pivoted QR decomposition
 /// as the linear solver backend.
@@ -83,7 +83,7 @@ pub trait LinearSolver: std::fmt::Debug + sealed::Sealed {
     fn linear_coefficients_matrix(self) -> DMatrix<Self::ScalarType>;
 }
 
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 impl<ScalarType: ComplexField> sealed::Sealed for ColPivQrLinearSolver<ScalarType> {}
 impl<ScalarType: ComplexField> sealed::Sealed for SvdLinearSolver<ScalarType> {}
 

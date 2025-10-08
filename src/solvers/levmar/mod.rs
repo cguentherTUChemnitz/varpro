@@ -7,9 +7,9 @@ use levenberg_marquardt::LeastSquaresProblem;
 // pub use levenberg_marquardt::LevenbergMarquardt as LevMarSolver;
 use levenberg_marquardt::LevenbergMarquardt;
 use nalgebra::{ComplexField, Dyn, RealField, Scalar};
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 use num_traits::float::TotalOrder;
 use num_traits::{Float, FromPrimitive};
 #[cfg(any(test, doctest))]
@@ -19,10 +19,10 @@ mod test;
 // Maybe we'll make this module public, but for now I feel this would make
 // the API more complicated.
 mod levmar_problem;
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 pub use levmar_problem::ColPivQrLinearSolver;
 pub use levmar_problem::LevMarProblem;
-#[cfg(feature = "lapack")]
+#[cfg(feature = "__lapack")]
 pub use levmar_problem::LevMarProblemCpQr;
 pub use levmar_problem::LevMarProblemSvd;
 pub use levmar_problem::LinearSolver;
@@ -83,7 +83,7 @@ where
         }
     }
 
-    #[cfg(feature = "lapack")]
+    #[cfg(feature = "__lapack")]
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using column-pivoted QR decomposition, which is typically faster
