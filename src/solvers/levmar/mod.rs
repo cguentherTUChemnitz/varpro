@@ -11,7 +11,9 @@ use nalgebra::{ComplexField, Dyn, RealField, Scalar};
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 #[cfg(feature = "__lapack")]
 use num_traits::float::TotalOrder;
+#[cfg(feature = "__lapack")]
 use num_traits::ConstOne;
+#[cfg(feature = "__lapack")]
 use num_traits::ConstZero;
 use num_traits::{Float, FromPrimitive};
 #[cfg(any(test, doctest))]
