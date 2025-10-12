@@ -152,12 +152,21 @@ where
             .assume_init()
         };
 
+        // quick and dirty catch-all error type so we can use the iterator in the
+        // next section with multiple sources of errors, not just model errors
+        struct InternalError;
+        impl InternalError {
+            fn new<E>(_error: E) -> Self {
+                Self
+            }
+        }
+
         // we use a functional style calculation here that is more easy to
         // parallelize with rayon later on. The only disadvantage is that
         // we don't short circuit anymore if there is an error in calculation,
         // but since that is the sad path anyways, we don't care about a
         // performance hit in the sad path.
-        let result: Result<Vec<()>, Model::Error> = jacobian_matrix
+        let result: Result<Vec<()>, InternalError> = jacobian_matrix
             .column_iter_mut()
             .enumerate()
             .map(|(k, mut jacobian_col)| {
@@ -183,8 +192,14 @@ where
                 // allocations.
                 // // TODO replace by correct error handling
                 let mut Dk = &self.separable_problem.weights
-                    * self.separable_problem.model.eval_partial_deriv(k)?;
-                decomposition.q_tr_mul_mut(&mut Dk).unwrap();
+                    * self
+                        .separable_problem
+                        .model
+                        .eval_partial_deriv(k)
+                        .map_err(InternalError::new)?;
+                decomposition
+                    .q_tr_mul_mut(&mut Dk)
+                    .map_err(InternalError::new)?;
                 let n = Dk.ncols();
                 let k = decomposition.rank();
                 Dk.view_mut((0, 0), (k as _, n))
