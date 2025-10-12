@@ -6,7 +6,7 @@ use nalgebra::{
     UninitMatrix, Vector,
 };
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
-use num_traits::{float::TotalOrder, Float, FromPrimitive};
+use num_traits::{float::TotalOrder, ConstOne, ConstZero, Float};
 use std::ops::Mul;
 
 /// caches the calculations for the implementation of the LevMarProblem
@@ -35,7 +35,7 @@ where
 impl<Model, Rhs> LeastSquaresProblem<Model::ScalarType, Dyn, Dyn>
     for LevMarProblem<Model, Rhs, ColPivQrLinearSolver<Model::ScalarType>>
 where
-    Model::ScalarType: Scalar + ComplexField + Copy,
+    Model::ScalarType: Scalar + ComplexField + Copy + ConstOne + ConstZero,
     <<Model as SeparableNonlinearModel>::ScalarType as ComplexField>::RealField:
         Mul<Model::ScalarType, Output = Model::ScalarType> + Float,
     Model: SeparableNonlinearModel,
@@ -111,15 +111,18 @@ where
         let cached = self.cached.as_ref()?;
         let mut current_residuals = self.separable_problem.Y_w.clone();
         // @todo handle errors
-        cached
+        if cached
             .decomposition
             .q_tr_mul_mut(&mut current_residuals)
-            .unwrap();
+            .is_err()
+        {
+            return None;
+        }
 
         let k = cached.decomposition.rank();
         current_residuals
             .view_mut((0, 0), (k as _, current_residuals.ncols()))
-            .fill(Model::ScalarType::from_i8(0).unwrap());
+            .fill(Model::ScalarType::ZERO);
         Some(to_vector(current_residuals))
     }
 
@@ -185,7 +188,7 @@ where
                 let n = Dk.ncols();
                 let k = decomposition.rank();
                 Dk.view_mut((0, 0), (k as _, n))
-                    .fill(Model::ScalarType::from_i8(0).unwrap());
+                    .fill(Model::ScalarType::ZERO);
                 // let Dk_C = Dk * (-linear_coefficients);
                 let view: MatrixViewMut<Model::ScalarType, Dyn, Dyn, _, _> =
                     jacobian_col.as_view_mut();
@@ -194,10 +197,10 @@ where
                     linear_coefficients.shape_generic().1,
                 )
                 .gemm(
-                    Model::ScalarType::from_i8(-1).unwrap(),
+                    -Model::ScalarType::ONE,
                     &Dk,
                     linear_coefficients,
-                    Model::ScalarType::from_i8(0).unwrap(),
+                    Model::ScalarType::ZERO,
                 );
 
                 //@todo CAUTION this relies on the fact that the

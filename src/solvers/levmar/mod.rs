@@ -11,6 +11,8 @@ use nalgebra::{ComplexField, Dyn, RealField, Scalar};
 use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
 #[cfg(feature = "__lapack")]
 use num_traits::float::TotalOrder;
+use num_traits::ConstOne;
+use num_traits::ConstZero;
 use num_traits::{Float, FromPrimitive};
 #[cfg(any(test, doctest))]
 mod test;
@@ -104,7 +106,9 @@ where
             + RealField
             + Float
             + FromPrimitive
-            + TotalOrder,
+            + TotalOrder
+            + ConstOne
+            + ConstZero,
     {
         let levmar_problem = LevMarProblemCpQr::from(problem);
         self.solve_generic(levmar_problem)
