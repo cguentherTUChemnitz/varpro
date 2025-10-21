@@ -2,23 +2,32 @@ use crate::{
     model::SeparableNonlinearModel,
     problem::{RhsType, SeparableProblem},
 };
+use colpiv_qr::QrDecomp;
 use levenberg_marquardt::LeastSquaresProblem;
-use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, Scalar};
+use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, RealField, Scalar};
 mod svd;
 
 #[cfg(feature = "__lapack")]
 pub mod colpiv_qr;
 
 #[cfg(feature = "__lapack")]
-pub use colpiv_qr::ColPivQrLinearSolver;
+pub use colpiv_qr::GeneralQrLinearSolver;
+use nalgebra_lapack::{qr::QrReal, QrDecomposition};
+use num_traits::Float;
 pub use svd::SvdLinearSolver;
 
 #[cfg(feature = "__lapack")]
 #[allow(type_alias_bounds)]
 /// type alias for a [`LevMarProblem`] using the column-pivoted QR decomposition
 /// as the linear solver backend.
-pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> =
-    LevMarProblem<Model, Rhs, ColPivQrLinearSolver<Model::ScalarType>>;
+pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> = LevMarProblem<
+    Model,
+    Rhs,
+    GeneralQrLinearSolver<
+        Model::ScalarType,
+        nalgebra_lapack::ColPivQR<Model::ScalarType, Dyn, Dyn>,
+    >,
+>;
 
 #[allow(type_alias_bounds)]
 /// type alias for a [`LevMarProblem`] using the SVD decomposition as
@@ -84,7 +93,12 @@ pub trait LinearSolver: std::fmt::Debug + sealed::Sealed {
 }
 
 #[cfg(feature = "__lapack")]
-impl<ScalarType: ComplexField> sealed::Sealed for ColPivQrLinearSolver<ScalarType> {}
+impl<ScalarType: RealField, Qrd> sealed::Sealed for GeneralQrLinearSolver<ScalarType, Qrd>
+where
+    ScalarType: Scalar + ComplexField + QrReal + RealField + Float,
+    Qrd: QrDecomp<ScalarType>,
+{
+}
 impl<ScalarType: ComplexField> sealed::Sealed for SvdLinearSolver<ScalarType> {}
 
 pub mod sealed {

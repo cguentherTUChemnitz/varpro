@@ -24,7 +24,10 @@ mod test;
 // the API more complicated.
 mod levmar_problem;
 #[cfg(feature = "__lapack")]
-pub use levmar_problem::ColPivQrLinearSolver;
+pub use levmar_problem::GeneralQrLinearSolver;
+/// linear solver using column pivoted QR decomposition
+pub type CpqrLinearSolver<ScalarType> =
+    GeneralQrLinearSolver<ScalarType, nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>>;
 pub use levmar_problem::LevMarProblem;
 #[cfg(feature = "__lapack")]
 pub use levmar_problem::LevMarProblemCpQr;

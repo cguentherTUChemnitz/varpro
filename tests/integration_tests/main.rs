@@ -21,7 +21,7 @@ use varpro::statistics::FitStatistics;
 
 type SvdSolverF64 = SvdLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
-type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
+type CpqrSolverF64 = CpqrLinearSolver<f64>;
 
 #[test]
 // sanity check my calculations above

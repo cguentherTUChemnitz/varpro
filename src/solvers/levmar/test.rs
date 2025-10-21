@@ -20,7 +20,7 @@ use nalgebra::{DMatrix, DVector, Owned};
 // exactly why it stalls though. This seems like bad behavior.
 type SvdSolverF64 = SvdLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
-type CpqrSolverF64 = ColPivQrLinearSolver<f64>;
+type CpqrSolverF64 = CpqrLinearSolver<f64>;
 #[cfg_attr(
     feature = "__lapack",
     typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)

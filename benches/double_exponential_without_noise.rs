@@ -17,7 +17,7 @@ use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
 use varpro::problem::SingleRhs;
 #[cfg(feature = "__lapack")]
-use varpro::solvers::levmar::ColPivQrLinearSolver;
+use varpro::solvers::levmar::CpqrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 
 /// helper struct for the parameters of the double exponential
@@ -168,7 +168,7 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
                     ),
                 )
             },
-            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
+            run_minimization_generic::<_, _, CpqrLinearSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -182,7 +182,7 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
                     DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
                 )
             },
-            run_minimization_generic::<_, _, ColPivQrLinearSolver<_>>,
+            run_minimization_generic::<_, _, CpqrLinearSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });

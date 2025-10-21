@@ -1,9 +1,9 @@
-use super::{LevMarProblem, LinearSolver};
+use super::{sealed::Sealed, LevMarProblem, LinearSolver};
 use crate::{model::SeparableNonlinearModel, problem::RhsType, util::to_vector};
 use levenberg_marquardt::LeastSquaresProblem;
 use nalgebra::{
-    ComplexField, DMatrix, DefaultAllocator, Dyn, Matrix, MatrixViewMut, Owned, RealField, Scalar,
-    UninitMatrix, Vector,
+    ComplexField, DMatrix, DefaultAllocator, Dyn, Matrix, MatrixViewMut, OMatrix, Owned, RealField,
+    Scalar, UninitMatrix, Vector,
 };
 use nalgebra_lapack::{
     qr::{QrReal, QrScalar},
@@ -12,21 +12,58 @@ use nalgebra_lapack::{
 use num_traits::{float::TotalOrder, ConstOne, ConstZero, Float};
 use std::ops::Mul;
 
+pub trait QrDecomp<ScalarType>:
+    QrDecomposition<ScalarType, Dyn, Dyn> + Sized + std::fmt::Debug + Sealed
+where
+    ScalarType: Scalar + ComplexField + QrReal + RealField,
+{
+    fn new(mat: OMatrix<ScalarType, Dyn, Dyn>) -> Result<Self, nalgebra_lapack::qr::Error>;
+    fn rank(&self) -> usize;
+}
+
+impl<ScalarType: Scalar> Sealed for nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn> {}
+
+impl<ScalarType> QrDecomp<ScalarType> for nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>
+where
+    ScalarType: Scalar + ComplexField + QrReal + RealField + Float + TotalOrder,
+{
+    fn new(mat: OMatrix<ScalarType, Dyn, Dyn>) -> Result<Self, nalgebra_lapack::qr::Error> {
+        nalgebra_lapack::ColPivQR::new(mat)
+    }
+
+    fn rank(&self) -> usize {
+        nalgebra_lapack::ColPivQR::<ScalarType, _, _>::rank(&self) as usize
+    }
+}
+
+/// caches the calculations for the implementation of the LevMarProblem
+/// with column-pivoted QR decomposition.
+#[derive(Debug)]
+pub struct GeneralQrLinearSolver<ScalarType, Qrd: QrDecomp<ScalarType>>
+where
+    ScalarType: Scalar + ComplexField + QrReal + RealField,
+{
+    pub(crate) decomposition: Qrd,
+    /// the linear coefficients `$\boldsymbol C$` providing the current best fit
+    pub(crate) linear_coefficients: DMatrix<ScalarType>,
+}
+
 /// caches the calculations for the implementation of the LevMarProblem
 /// with column-pivoted QR decomposition.
 #[derive(Debug)]
 pub struct ColPivQrLinearSolver<ScalarType>
 where
-    ScalarType: Scalar + ComplexField,
+    ScalarType: Scalar + RealField,
 {
     pub(crate) decomposition: nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>,
     /// the linear coefficients `$\boldsymbol C$` providing the current best fit
     pub(crate) linear_coefficients: DMatrix<ScalarType>,
 }
 
-impl<ScalarType> LinearSolver for ColPivQrLinearSolver<ScalarType>
+impl<ScalarType, Qrd> LinearSolver for GeneralQrLinearSolver<ScalarType, Qrd>
 where
-    ScalarType: Scalar + ComplexField,
+    ScalarType: Scalar + ComplexField + QrReal + RealField + Float,
+    Qrd: QrDecomp<ScalarType>,
 {
     type ScalarType = ScalarType;
 
@@ -35,8 +72,8 @@ where
     }
 }
 
-impl<Model, Rhs> LeastSquaresProblem<Model::ScalarType, Dyn, Dyn>
-    for LevMarProblem<Model, Rhs, ColPivQrLinearSolver<Model::ScalarType>>
+impl<Model, Rhs, Qrd> LeastSquaresProblem<Model::ScalarType, Dyn, Dyn>
+    for LevMarProblem<Model, Rhs, GeneralQrLinearSolver<Model::ScalarType, Qrd>>
 where
     Model::ScalarType: Scalar + ComplexField + Copy + ConstOne + ConstZero,
     <<Model as SeparableNonlinearModel>::ScalarType as ComplexField>::RealField:
@@ -45,6 +82,7 @@ where
     DefaultAllocator: nalgebra::allocator::Allocator<Dyn>,
     Model::ScalarType: QrReal + QrScalar + Float + RealField + TotalOrder,
     Rhs: RhsType,
+    Qrd: QrDecomp<Model::ScalarType>,
 {
     type ResidualStorage = Owned<Model::ScalarType, Dyn>;
     type JacobianStorage = Owned<Model::ScalarType, Dyn, Dyn>;
@@ -76,7 +114,7 @@ where
 
         let Phi_w = &self.separable_problem.weights * Phi;
 
-        let Ok(decomposition) = nalgebra_lapack::ColPivQR::new(Phi_w) else {
+        let Ok(decomposition) = Qrd::new(Phi_w) else {
             self.cached = None;
             return;
         };
@@ -87,7 +125,7 @@ where
             return;
         };
 
-        self.cached = Some(ColPivQrLinearSolver {
+        self.cached = Some(GeneralQrLinearSolver {
             // current_residuals,
             decomposition,
             linear_coefficients,
@@ -137,7 +175,7 @@ where
         // TODO (Performance): make this more efficient by parallelizing
         // but remember that just slapping rayon on the column_iter DOES NOT
         // make it more efficient
-        let ColPivQrLinearSolver {
+        let GeneralQrLinearSolver {
             // current_residuals: _,
             decomposition,
             linear_coefficients,

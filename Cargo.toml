@@ -15,7 +15,7 @@ keywords = ["nonlinear", "regression", "function", "fitting", "least-squares"]
 members = [".","shared_test_code"]
 
 [features]
-default = []
+default = ["lapack-netlib"]
 # don't set this feature externally. It's used internally to flag that a
 # lapack dependency was enabled.
 __lapack = []
