@@ -5,7 +5,10 @@ use nalgebra::{
     ComplexField, DMatrix, DefaultAllocator, Dyn, Matrix, MatrixViewMut, Owned, RealField, Scalar,
     UninitMatrix, Vector,
 };
-use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
+use nalgebra_lapack::{
+    qr::{QrReal, QrScalar},
+    QrDecomposition,
+};
 use num_traits::{float::TotalOrder, ConstOne, ConstZero, Float};
 use std::ops::Mul;
 
@@ -40,7 +43,7 @@ where
         Mul<Model::ScalarType, Output = Model::ScalarType> + Float,
     Model: SeparableNonlinearModel,
     DefaultAllocator: nalgebra::allocator::Allocator<Dyn>,
-    Model::ScalarType: ColPivQrReal + ColPivQrScalar + Float + RealField + TotalOrder,
+    Model::ScalarType: QrReal + QrScalar + Float + RealField + TotalOrder,
     Rhs: RhsType,
 {
     type ResidualStorage = Owned<Model::ScalarType, Dyn>;

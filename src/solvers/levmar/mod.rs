@@ -8,7 +8,7 @@ use levenberg_marquardt::LeastSquaresProblem;
 use levenberg_marquardt::LevenbergMarquardt;
 use nalgebra::{ComplexField, Dyn, RealField, Scalar};
 #[cfg(feature = "__lapack")]
-use nalgebra_lapack::colpiv_qr::{ColPivQrReal, ColPivQrScalar};
+use nalgebra_lapack::qr::{QrReal, QrScalar};
 #[cfg(feature = "__lapack")]
 use num_traits::float::TotalOrder;
 #[cfg(feature = "__lapack")]
@@ -101,8 +101,8 @@ where
     ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
     where
         Model: SeparableNonlinearModel,
-        Model::ScalarType: ColPivQrReal
-            + ColPivQrScalar
+        Model::ScalarType: QrReal
+            + QrScalar
             + Scalar
             + ComplexField
             + RealField
