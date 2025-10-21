@@ -18,6 +18,7 @@ use varpro::problem::SeparableProblemBuilder;
 use varpro::problem::SingleRhs;
 #[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::CpqrLinearSolver;
+use varpro::solvers::levmar::QrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 
 /// helper struct for the parameters of the double exponential
@@ -183,6 +184,37 @@ fn bench_double_exp_no_noise(c: &mut Criterion) {
                 )
             },
             run_minimization_generic::<_, _, CpqrLinearSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    #[cfg(feature = "__lapack")]
+    group.bench_function("Using Model Builder with unpivoted QR", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem(
+                    true_parameters,
+                    get_double_exponential_model_with_constant_offset(
+                        x.clone(),
+                        vec![tau_guess.0, tau_guess.1],
+                    ),
+                )
+            },
+            run_minimization_generic::<_, _, QrLinearSolver<_>>,
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    #[cfg(feature = "__lapack")]
+    group.bench_function("Handcrafted Model with unpivoted QR", |bencher| {
+        bencher.iter_batched(
+            || {
+                build_problem(
+                    true_parameters,
+                    DoubleExpModelWithConstantOffsetSepModel::new(x.clone(), tau_guess),
+                )
+            },
+            run_minimization_generic::<_, _, QrLinearSolver<_>>,
             criterion::BatchSize::SmallInput,
         )
     });

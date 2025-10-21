@@ -28,6 +28,10 @@ pub use levmar_problem::GeneralQrLinearSolver;
 /// linear solver using column pivoted QR decomposition
 pub type CpqrLinearSolver<ScalarType> =
     GeneralQrLinearSolver<ScalarType, nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>>;
+/// linear solver using unpivoted QR decomposition. Do not use this if you fear
+/// that the jacobian of the fitting problem might become singular during.
+pub type QrLinearSolver<ScalarType> =
+    GeneralQrLinearSolver<ScalarType, nalgebra_lapack::QR<ScalarType, Dyn, Dyn>>;
 pub use levmar_problem::LevMarProblem;
 #[cfg(feature = "__lapack")]
 pub use levmar_problem::LevMarProblemCpQr;

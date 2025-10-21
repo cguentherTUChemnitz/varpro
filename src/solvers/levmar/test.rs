@@ -21,9 +21,11 @@ use nalgebra::{DMatrix, DVector, Owned};
 type SvdSolverF64 = SvdLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
 type CpqrSolverF64 = CpqrLinearSolver<f64>;
+#[cfg(feature = "__lapack")]
+type QrSolverF64 = QrLinearSolver<f64>;
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted<Solver>()
@@ -65,7 +67,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // I am implementing my own test that checks if my jacobian and residual calculations are
@@ -170,9 +172,14 @@ impl ResidualCorrectnes for CpqrSolverF64 {
     const EXPECT_VECTOR_CORRECT: bool = false;
 }
 
+#[cfg(feature = "__lapack")]
+impl ResidualCorrectnes for QrSolverF64 {
+    const EXPECT_VECTOR_CORRECT: bool = false;
+}
+
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn residuals_are_calculated_correctly_unweighted<Solver>()
@@ -256,7 +263,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn residuals_are_calculated_correctly_with_weights<Solver>()

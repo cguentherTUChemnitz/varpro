@@ -22,6 +22,7 @@ where
 }
 
 impl<ScalarType: Scalar> Sealed for nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn> {}
+impl<ScalarType: Scalar> Sealed for nalgebra_lapack::QR<ScalarType, Dyn, Dyn> {}
 
 impl<ScalarType> QrDecomp<ScalarType> for nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>
 where
@@ -36,6 +37,20 @@ where
     }
 }
 
+impl<ScalarType> QrDecomp<ScalarType> for nalgebra_lapack::QR<ScalarType, Dyn, Dyn>
+where
+    ScalarType: Scalar + ComplexField + QrReal + RealField + Float + TotalOrder,
+{
+    fn new(mat: OMatrix<ScalarType, Dyn, Dyn>) -> Result<Self, nalgebra_lapack::qr::Error> {
+        nalgebra_lapack::QR::new(mat)
+    }
+
+    fn rank(&self) -> usize {
+        // we always return full rank here
+        self.nrows().min(self.ncols())
+    }
+}
+
 /// caches the calculations for the implementation of the LevMarProblem
 /// with column-pivoted QR decomposition.
 #[derive(Debug)]
@@ -44,18 +59,6 @@ where
     ScalarType: Scalar + ComplexField + QrReal + RealField,
 {
     pub(crate) decomposition: Qrd,
-    /// the linear coefficients `$\boldsymbol C$` providing the current best fit
-    pub(crate) linear_coefficients: DMatrix<ScalarType>,
-}
-
-/// caches the calculations for the implementation of the LevMarProblem
-/// with column-pivoted QR decomposition.
-#[derive(Debug)]
-pub struct ColPivQrLinearSolver<ScalarType>
-where
-    ScalarType: Scalar + RealField,
-{
-    pub(crate) decomposition: nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>,
     /// the linear coefficients `$\boldsymbol C$` providing the current best fit
     pub(crate) linear_coefficients: DMatrix<ScalarType>,
 }

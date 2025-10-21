@@ -22,6 +22,8 @@ use varpro::statistics::FitStatistics;
 type SvdSolverF64 = SvdLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
 type CpqrSolverF64 = CpqrLinearSolver<f64>;
+#[cfg(feature = "__lapack")]
+type QrSolverF64 = QrLinearSolver<f64>;
 
 #[test]
 // sanity check my calculations above
@@ -96,7 +98,7 @@ fn sanity_check_jacobian_of_levenberg_marquardt_problem_mrhs_is_correct() {
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_fitting_without_noise_produces_accurate_results_impl<Solver>()
@@ -176,7 +178,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_fitting_without_noise_produces_accurate_results_with_handrolled_model_impl<
@@ -427,7 +429,7 @@ fn double_exponential_model_with_levenberg_marquardt_mrhs_produces_accurate_resu
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 #[allow(non_snake_case)]
@@ -511,7 +513,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 #[allow(non_snake_case)]
@@ -617,7 +619,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<Solver>()
@@ -698,7 +700,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 fn weighted_double_exponential_model_with_noise_gives_same_confidence_interval_as_lmfit_impl<
@@ -814,7 +816,7 @@ fn read_vec_f64(path: impl AsRef<std::path::Path>, size_hint: Option<usize>) -> 
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // this also tests the correct application of weights
@@ -942,7 +944,7 @@ where
 
 #[cfg_attr(
     feature = "__lapack",
-    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64)
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
 )]
 #[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // this also tests the correct application of weights
