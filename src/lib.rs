@@ -149,9 +149,14 @@
 //! ## Solver Methods
 //!
 //! The [`LevMarSolver`](crate::solvers::levmar::LevMarSolver) provides several methods:
-//! - [`solve`](crate::solvers::levmar::LevMarSolver::solve): Uses SVD decomposition (default, always available)
-//! - [`solve_with_svd`](crate::solvers::levmar::LevMarSolver::solve_with_svd): Explicitly use SVD decomposition
-//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use column-pivoted QR decomposition (requires one of the `lapack-*` features)
+//! - [`solve`](crate::solvers::levmar::LevMarSolver::solve): Uses
+//!   SVD decomposition (default, always available)
+//! - [`solve_with_svd`](crate::solvers::levmar::LevMarSolver::solve_with_svd): Explicitly
+//!   use SVD decomposition
+//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use
+//!   column-pivoted QR decomposition (requires one of the `lapack-*` features)
+//! - [`solve_with_qr`](crate::solvers::levmar::LevMarSolver::solve_with_qr): Use
+//!   unpivoted QR decomposition (requires one of the `lapack-*` features)
 //!
 //! **Performance Note:** The column-pivoted QR method often provides better performance,
 //! especially for single right-hand side problems, but requires one of the `lapack-*` features,
