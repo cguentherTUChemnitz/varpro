@@ -20,8 +20,36 @@ use nalgebra::{DMatrix, DVector, Owned};
 // exactly why it stalls though. This seems like bad behavior.
 type SvdSolverF64 = SvdLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 type CpqrSolverF64 = CpqrLinearSolver<f64>;
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 type QrSolverF64 = QrLinearSolver<f64>;
 #[cfg_attr(
     feature = "__lapack",

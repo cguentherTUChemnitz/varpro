@@ -62,8 +62,8 @@ harness = false
 
 [package.metadata.docs.rs]
 # To build locally use
-#   RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps --open
-rustdoc-args = ["--html-in-header", "katex-header.html"]
+#   RUSTDOCFLAGS="--html-in-header katex-header.html --cfg docsrs" cargo +nightly doc --no-deps --open --features lapack-netlib
+rustdoc-args = ["--html-in-header", "katex-header.html", "--cfg", "docsrs"]
 # Enable LAPACK features for documentation (using netlib as it's most common)
 features = ["lapack-netlib"]
 

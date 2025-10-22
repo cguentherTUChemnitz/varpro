@@ -27,11 +27,39 @@ mod levmar_problem;
 pub use levmar_problem::GeneralQrLinearSolver;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 /// linear solver using column pivoted QR decomposition
 pub type CpqrLinearSolver<ScalarType> =
     GeneralQrLinearSolver<ScalarType, nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>>;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 /// linear solver using unpivoted QR decomposition. Do not use this if you fear
 /// that the model function matrix might become singular or ill-conditioned
 /// during the fitting process.
@@ -40,6 +68,8 @@ pub type QrLinearSolver<ScalarType> =
 pub use levmar_problem::LevMarProblem;
 #[cfg(feature = "__lapack")]
 pub use levmar_problem::LevMarProblemCpQr;
+#[cfg(feature = "__lapack")]
+pub use levmar_problem::LevMarProblemQr;
 pub use levmar_problem::LevMarProblemSvd;
 pub use levmar_problem::LinearSolver;
 pub use levmar_problem::SvdLinearSolver;
@@ -100,6 +130,20 @@ where
     }
 
     #[cfg(feature = "__lapack")]
+    #[cfg_attr(
+        docsrs,
+        doc(cfg(any(
+            feature = "lapack-netlib",
+            feature = "lapack-mkl",
+            feature = "lapack-mkl-static-seq",
+            feature = "lapack-mkl-static-par",
+            feature = "lapack-mkl-dynamic-seq",
+            feature = "lapack-mkl-dynamic-par",
+            feature = "lapack-openblas",
+            feature = "lapack-accelerate",
+            feature = "lapack-custom"
+        )))
+    )]
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using unpivoted QR decomposition, which is typically faster
@@ -127,12 +171,25 @@ where
             + ConstOne
             + ConstZero,
     {
-        use levmar_problem::LevMarProblemQr;
         let levmar_problem = LevMarProblemQr::from(problem);
         self.solve_generic(levmar_problem)
     }
 
     #[cfg(feature = "__lapack")]
+    #[cfg_attr(
+        docsrs,
+        doc(cfg(any(
+            feature = "lapack-netlib",
+            feature = "lapack-mkl",
+            feature = "lapack-mkl-static-seq",
+            feature = "lapack-mkl-static-par",
+            feature = "lapack-mkl-dynamic-seq",
+            feature = "lapack-mkl-dynamic-par",
+            feature = "lapack-openblas",
+            feature = "lapack-accelerate",
+            feature = "lapack-custom"
+        )))
+    )]
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using column-pivoted QR decomposition, which is typically faster

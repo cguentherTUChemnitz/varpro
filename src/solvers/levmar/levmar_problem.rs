@@ -12,9 +12,37 @@ mod svd;
 use nalgebra::RealField;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 pub mod colpiv_qr;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 pub use colpiv_qr::GeneralQrLinearSolver;
 #[cfg(feature = "__lapack")]
 use nalgebra_lapack::qr::QrReal;
@@ -23,6 +51,20 @@ use num_traits::Float;
 pub use svd::SvdLinearSolver;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 #[allow(type_alias_bounds)]
 /// type alias for a [`LevMarProblem`] using the column-pivoted QR decomposition
 /// as the linear solver backend.
@@ -36,6 +78,20 @@ pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> = LevMarProblem<
 >;
 
 #[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
 #[allow(type_alias_bounds)]
 /// type alias for a [`LevMarProblem`] using the unpivoted QR decomposition
 /// as the linear solver backend.
