@@ -10,7 +10,9 @@ solver backends and significant performance improvements.
 
 ### New Features
 * **Multiple Linear Solver Backends**: Added support for different linear algebra backends:
-  - `ColPivQrLinearSolver`: Column-pivoted QR decomposition using nalgebra-lapack (requires `lapack` feature)
+  - `ColPivQrLinearSolver`: Column-pivoted QR decomposition using nalgebra-lapack (requires one
+    of the `lapack-*` features to be enabled).
+  - `QrLinearSolver`: unpivoted QR decomposition (also requires LAPACK)
   - `SvdLinearSolver`: SVD decomposition (i.e. the functionality that was previously available)
   - New `LinearSolver` trait to abstract over different solver implementations
 * **Performance Improvements**: Significant optimizations especially for single right-hand side problems using QR decomposition

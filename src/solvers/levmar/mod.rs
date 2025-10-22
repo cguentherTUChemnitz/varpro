@@ -25,11 +25,16 @@ mod test;
 mod levmar_problem;
 #[cfg(feature = "__lapack")]
 pub use levmar_problem::GeneralQrLinearSolver;
+
+#[cfg(feature = "__lapack")]
 /// linear solver using column pivoted QR decomposition
 pub type CpqrLinearSolver<ScalarType> =
     GeneralQrLinearSolver<ScalarType, nalgebra_lapack::ColPivQR<ScalarType, Dyn, Dyn>>;
+
+#[cfg(feature = "__lapack")]
 /// linear solver using unpivoted QR decomposition. Do not use this if you fear
-/// that the jacobian of the fitting problem might become singular during.
+/// that the model function matrix might become singular or ill-conditioned
+/// during the fitting process.
 pub type QrLinearSolver<ScalarType> =
     GeneralQrLinearSolver<ScalarType, nalgebra_lapack::QR<ScalarType, Dyn, Dyn>>;
 pub use levmar_problem::LevMarProblem;
@@ -97,11 +102,44 @@ where
     #[cfg(feature = "__lapack")]
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
+    /// backend using unpivoted QR decomposition, which is typically faster
+    /// than SVD and can also be faster than column-pivoted QR. However, this
+    /// speed comes at the cost of decreased numerical robustness. **Do not**
+    /// use this solver when you fear that the model function matrix might
+    /// become ill-conditioned or singular during the fit process.
+    ///
+    /// **Note**: This method requires one of the `lapack-*` features to be enabled.
+    pub fn solve_with_qr<Rhs: RhsType>(
+        &self,
+        problem: SeparableProblem<Model, Rhs>,
+    ) -> Result<FitResult<Model, Rhs>, FitResult<Model, Rhs>>
+    where
+        Model: SeparableNonlinearModel,
+        Model::ScalarType: QrReal
+            + QrScalar
+            + Scalar
+            + ComplexField
+            + RealField
+            + Float
+            + FromPrimitive
+            + TotalOrder
+            + ConstOne
+            + ConstZero,
+    {
+        use levmar_problem::LevMarProblemQr;
+        let levmar_problem = LevMarProblemQr::from(problem);
+        self.solve_generic(levmar_problem)
+    }
+
+    #[cfg(feature = "__lapack")]
+    #[allow(clippy::result_large_err)]
+    /// Solve the given separable problem with VarPro with a linear solver
     /// backend using column-pivoted QR decomposition, which is typically faster
     /// than SVD, while also exhibiting very good numerical stability, even
-    /// for ill-conditioned problems.
+    /// for ill-conditioned problems. If LAPACK is available, then this
+    /// is a good default.
     ///
-    /// **Note**: This method requires the `lapack` feature to be enabled.
+    /// **Note**: This method requires one of the `lapack-*` features to be enabled.
     pub fn solve_with_cpqr<Rhs: RhsType>(
         &self,
         problem: SeparableProblem<Model, Rhs>,

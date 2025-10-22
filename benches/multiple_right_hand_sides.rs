@@ -13,6 +13,7 @@ use varpro::problem::SeparableProblem;
 use varpro::problem::SeparableProblemBuilder;
 #[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::CpqrLinearSolver;
+#[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::QrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 

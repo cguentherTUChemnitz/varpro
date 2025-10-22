@@ -18,6 +18,7 @@ use varpro::problem::SeparableProblemBuilder;
 use varpro::problem::SingleRhs;
 #[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::CpqrLinearSolver;
+#[cfg(feature = "__lapack")]
 use varpro::solvers::levmar::QrLinearSolver;
 use varpro::solvers::levmar::SvdLinearSolver;
 

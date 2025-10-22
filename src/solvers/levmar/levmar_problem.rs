@@ -2,17 +2,23 @@ use crate::{
     model::SeparableNonlinearModel,
     problem::{RhsType, SeparableProblem},
 };
+#[cfg(feature = "__lapack")]
 use colpiv_qr::QrDecomp;
 use levenberg_marquardt::LeastSquaresProblem;
-use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, RealField, Scalar};
+use nalgebra::{ComplexField, Const, DMatrix, Dyn, Owned, Scalar};
 mod svd;
+
+#[cfg(feature = "__lapack")]
+use nalgebra::RealField;
 
 #[cfg(feature = "__lapack")]
 pub mod colpiv_qr;
 
 #[cfg(feature = "__lapack")]
 pub use colpiv_qr::GeneralQrLinearSolver;
-use nalgebra_lapack::{qr::QrReal, QrDecomposition};
+#[cfg(feature = "__lapack")]
+use nalgebra_lapack::qr::QrReal;
+#[cfg(feature = "__lapack")]
 use num_traits::Float;
 pub use svd::SvdLinearSolver;
 
@@ -27,6 +33,16 @@ pub type LevMarProblemCpQr<Model: SeparableNonlinearModel, Rhs> = LevMarProblem<
         Model::ScalarType,
         nalgebra_lapack::ColPivQR<Model::ScalarType, Dyn, Dyn>,
     >,
+>;
+
+#[cfg(feature = "__lapack")]
+#[allow(type_alias_bounds)]
+/// type alias for a [`LevMarProblem`] using the unpivoted QR decomposition
+/// as the linear solver backend.
+pub type LevMarProblemQr<Model: SeparableNonlinearModel, Rhs> = LevMarProblem<
+    Model,
+    Rhs,
+    GeneralQrLinearSolver<Model::ScalarType, nalgebra_lapack::QR<Model::ScalarType, Dyn, Dyn>>,
 >;
 
 #[allow(type_alias_bounds)]
