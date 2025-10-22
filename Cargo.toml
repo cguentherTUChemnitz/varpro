@@ -64,6 +64,8 @@ harness = false
 # To build locally use
 #   RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps --open
 rustdoc-args = ["--html-in-header", "katex-header.html"]
+# Enable LAPACK features for documentation (using netlib as it's most common)
+features = ["lapack-netlib"]
 
 # TODO TODO TODO remove this before publish
 [patch.crates-io]
