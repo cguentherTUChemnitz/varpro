@@ -103,10 +103,11 @@ where
     #[allow(clippy::result_large_err)]
     /// Solve the given separable problem with VarPro with a linear solver
     /// backend using unpivoted QR decomposition, which is typically faster
-    /// than SVD and can also be faster than column-pivoted QR. However, this
-    /// speed comes at the cost of decreased numerical robustness. **Do not**
-    /// use this solver when you fear that the model function matrix might
-    /// become ill-conditioned or singular during the fit process.
+    /// than SVD and _might_ also be faster than column-pivoted QR (but
+    /// it also might not be!). However, this speed comes at the cost of
+    /// decreased numerical robustness. **Do not** use this solver when you
+    /// fear that the model function matrix can become ill-conditioned or
+    /// singular during the fit process.
     ///
     /// **Note**: This method requires one of the `lapack-*` features to be enabled.
     pub fn solve_with_qr<Rhs: RhsType>(
