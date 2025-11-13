@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # image:                    xd009642/tarpaulin:develop-nightly
-      image: xd009642/tarpaulin
+      # image: xd009642/tarpaulin
+      image: xd009642/tarpaulin:develop-nightly
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
