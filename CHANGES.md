@@ -43,6 +43,9 @@ solver backends and significant performance improvements.
   let statistics = FitStatistics::try_from(fit_result)?;
   ```
 
+### MSRV
+* changed to 1.85 because some downstream dependencies require edition 2024
+
 ## 0.13.3
 
 * Small, but noticeable performance improvements

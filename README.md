@@ -154,12 +154,12 @@ This is not only useful for performance, but also for use cases that are difficu
 or impossible to accommodate using only the [`SeparableModelBuilder`](https://docs.rs/varpro/latest/varpro/model/builder/struct.SeparableModelBuilder.html). The builder
 was created for ease of use _and_ performance, but it has some limitations by design.
 
-## Minimum Supported Rust Version (MSRV)
+## Note on Minimum Supported Rust Version (MSRV)
 
-The minimum supported Rust version is `1.75.0`. Note, that running the tests and
-benchmarks might require a more recent version of the compiler. Testing and
-benchmarking is always performed with the most recent `stable` version of Rust at
-the time of publishing.
+Running the tests and benchmarks might require a more recent version
+of the compiler than indicated by the MSRV. Testing and benchmarking is
+always performed with the most recent `stable` version of Rust at the
+time of publishing.
 
 ## Acknowledgements
 
