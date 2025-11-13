@@ -19,5 +19,7 @@ Cargo.lock
 
 # ide folders
 .idea/
+.zed/
+.helix/
 
 lcov.info

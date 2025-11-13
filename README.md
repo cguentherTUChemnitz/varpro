@@ -23,7 +23,7 @@ for all the meaty details, including the math.
 
 ### What are Separable Models?
 
-Put simply, separable models are nonlinear functions which can be 
+Put simply, separable models are nonlinear functions which can be
 written as a *linear combination* of some *nonlinear* basis functions.
 A common use case for `varpro` is e.g. fitting sums of exponentials,
 which is a notoriously ill-conditioned problem.
@@ -49,7 +49,7 @@ which provides another great use case for this crate.
 ## Example Usage
 
 The following example shows, how to use this crate to fit a double exponential decay
-with constant offset to a data vector `y` obtained at time points `t`. 
+with constant offset to a data vector `y` obtained at time points `t`.
 [Refer to the documentation](https://docs.rs/varpro/) for a more in-depth guide.
 
 ```rust
@@ -61,7 +61,7 @@ use nalgebra::{dvector,DVector};
 // Define the exponential decay e^(-t/tau).
 // Both of the nonlinear basis functions in this example
 // are exponential decays.
-fn exp_decay(t :&DVector<f64>, tau : f64) 
+fn exp_decay(t :&DVector<f64>, tau : f64)
   -> DVector<f64> {
   t.map(|t|(-t/tau).exp())
 }
@@ -69,7 +69,7 @@ fn exp_decay(t :&DVector<f64>, tau : f64)
 // the partial derivative of the exponential
 // decay with respect to the nonlinear parameter tau.
 // d/dtau e^(-t/tau) = e^(-t/tau)*t/tau^2
-fn exp_decay_dtau(t: &DVector<f64>,tau: f64) 
+fn exp_decay_dtau(t: &DVector<f64>,tau: f64)
   -> DVector<f64> {
   t.map(|t| (-t / tau)
     .exp() * t / tau.powi(2))
@@ -109,7 +109,7 @@ let problem = SeparableProblemBuilder::new(model)
   .unwrap();
 // 3. Solve the fitting problem
 let fit_result = LevMarSolver::default()
-    .fit(problem)
+    .solve(problem)
     .expect("fit must exit successfully");
 // 4. obtain the nonlinear parameters after fitting
 let alpha = fit_result.nonlinear_parameters();
@@ -121,9 +121,9 @@ For more in-depth examples, please refer to the crate documentation.
 
 ### Fit Statistics
 
-Additionally to the [`fit`](https://docs.rs/varpro/latest/varpro/solvers/levmar/struct.LevMarSolver.html#method.fit) member function,
-the [`LevMarSolver`](https://docs.rs/varpro/latest/varpro/solvers/levmar/struct.LevMarSolver.html) provides a [`fit_with_statistics`](https://docs.rs/varpro/latest/varpro/solvers/levmar/struct.LevMarSolver.html#method.fit_with_statistics) function that calculates
-an extra bit of useful statistical information.
+Additionally to the [`solve`](https://docs.rs/varpro/latest/varpro/solvers/levmar/struct.LevMarSolver.html#method.solve) member function,
+you can calculate additional statistical information by using [`FitStatistics::try_from`](https://docs.rs/varpro/latest/varpro/statistics/struct.FitStatistics.html#impl-TryFrom%3C%26FitResult%3CModel%2C+SingleRhs%3E%3E-for-FitStatistics%3CModel%3E)
+on the fit result.
 
 ### Global Fitting of Multiple Right Hand Sides
 
@@ -154,17 +154,17 @@ This is not only useful for performance, but also for use cases that are difficu
 or impossible to accommodate using only the [`SeparableModelBuilder`](https://docs.rs/varpro/latest/varpro/model/builder/struct.SeparableModelBuilder.html). The builder
 was created for ease of use _and_ performance, but it has some limitations by design.
 
-## Minimum Supported Rust Version (MSRV)
+## Note on Minimum Supported Rust Version (MSRV)
 
-The minimum supported Rust version is `1.75.0`. Note, that running the tests and
-benchmarks might require a more recent version of the compiler. Testing and
-benchmarking is always performed with the most recent `stable` version of Rust at
-the time of publishing.
+Running the tests and benchmarks might require a more recent version
+of the compiler than indicated by the MSRV. Testing and benchmarking is
+always performed with the most recent `stable` version of Rust at the
+time of publishing.
 
 ## Acknowledgements
 
 I am grateful to Professor [Dianne P. O'Leary](http://www.cs.umd.edu/~oleary/)
-and [Bert W. Rust &#10013;](https://math.nist.gov/~BRust/), who published the paper that 
+and [Bert W. Rust &#10013;](https://math.nist.gov/~BRust/), who published the paper that
 enabled me to understand varpro and come up with this implementation.
 Professor O'Leary also graciously answered my questions on her paper and
 some implementation details.

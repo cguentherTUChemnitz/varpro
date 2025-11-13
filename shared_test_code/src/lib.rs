@@ -3,12 +3,17 @@
 //! integration tests.
 use std::ops::Range;
 
-use nalgebra::{ComplexField, DVector, DefaultAllocator, Dyn, OMatrix, OVector, Scalar};
+use levenberg_marquardt::LeastSquaresProblem;
+use nalgebra::{
+    ComplexField, Const, DMatrix, DVector, DefaultAllocator, Dyn, OMatrix, OVector, Owned, Scalar,
+};
 use num_traits::Float;
 use rand::{Rng, SeedableRng};
 use varpro::model::builder::SeparableModelBuilder;
 use varpro::model::SeparableModel;
 use varpro::prelude::SeparableNonlinearModel;
+use varpro::problem::{RhsType, SeparableProblem};
+use varpro::solvers::levmar::{LevMarProblem, LevMarSolver, LinearSolver};
 
 /// multiple right hand sides for for levenberg marquardt
 pub mod levmar_mrhs;
@@ -132,4 +137,29 @@ pub fn get_double_exponential_model_with_constant_offset(
         .independent_variable(x)
         .build()
         .expect("double exponential model builder should produce a valid model")
+}
+
+/// run the mimimization problem in a way that's pretty generic and can be
+/// used in the benchmark code.
+pub fn run_minimization_generic<Model, Rhs, Solver>(
+    problem: SeparableProblem<Model, Rhs>,
+) -> (DVector<f64>, DMatrix<f64>)
+where
+    Model: SeparableNonlinearModel<ScalarType = f64> + std::fmt::Debug,
+    Solver: LinearSolver<ScalarType = f64>,
+    LevMarProblem<Model, Rhs, Solver>: LeastSquaresProblem<
+        Model::ScalarType,
+        Dyn,
+        Dyn,
+        ParameterStorage = Owned<Model::ScalarType, Dyn, Const<1>>,
+    >,
+    Rhs: RhsType,
+{
+    let problem = LevMarProblem::<_, _, Solver>::from(problem);
+    let result = LevMarSolver::default()
+        .solve_generic::<_, Solver>(problem)
+        .expect("fitting must exit successfully");
+    let params = result.nonlinear_parameters();
+    let coeff = result.linear_coefficients_generic().unwrap();
+    (params, coeff.into_owned())
 }

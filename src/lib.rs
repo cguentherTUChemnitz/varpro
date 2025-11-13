@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(missing_docs)]
 //!
 //! # Introduction
@@ -141,18 +142,38 @@
 //! ```
 //!
 //! The third step is to use a solver to fit the model to the problem.
-//! Currently, the only available solver is the
-//! [Levenberg-Marquardt](https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm) algorithm
-//! using the [levenberg_marquardt](https://crates.io/crates/levenberg-marquardt/) crate.
-//! It is provided via the [`LevMarSolver`](crate::solvers::levmar::LevMarSolver)
-//! type, which allows us to make additional configurations to the solver.
+//! The solver uses the [Levenberg-Marquardt](https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm) algorithm
+//! from the [levenberg_marquardt](https://crates.io/crates/levenberg-marquardt/) crate with multiple
+//! linear algebra backends for the linear sub-problems. It is provided via the [`LevMarSolver`](crate::solvers::levmar::LevMarSolver)
+//! type, which supports different linear solver backends.
+//!
+//! ## Solver Methods
+//!
+//! The [`LevMarSolver`](crate::solvers::levmar::LevMarSolver) provides several methods:
+//! - [`solve`](crate::solvers::levmar::LevMarSolver::solve): Uses
+//!   SVD decomposition (default, always available)
+//! - [`solve_with_svd`](crate::solvers::levmar::LevMarSolver::solve_with_svd): Explicitly
+//!   use SVD decomposition
+//! - [`solve_with_cpqr`](crate::solvers::levmar::LevMarSolver::solve_with_cpqr): Use
+//!   column-pivoted QR decomposition (requires one of the `lapack-*` features)
+//! - [`solve_with_qr`](crate::solvers::levmar::LevMarSolver::solve_with_qr): Use
+//!   unpivoted QR decomposition (requires one of the `lapack-*` features)
+//!
+//! **Performance Note:** The column-pivoted QR method often provides better performance,
+//! especially for single right-hand side problems, but requires one of the `lapack-*` features,
+//! see the note on lapack features below.
+//!
+//! ```toml
+//! [dependencies]
+//! varpro = { version = "0.14", features = ["lapack"] }
+//! ```
 //!
 //! ```no_run
 //! # use varpro::model::*;
 //! # use varpro::problem::*;
 //! # let problem : varpro::problem::SeparableProblem<SeparableModel<f64>, SingleRhs> = unimplemented!();
 //! use varpro::solvers::levmar::LevMarSolver;
-//! let fit_result = LevMarSolver::default().fit(problem).unwrap();
+//! let fit_result = LevMarSolver::default().solve(problem).unwrap();
 //! ```
 //!
 //! If successful, retrieve the nonlinear parameters `$\alpha$` using the
@@ -160,8 +181,8 @@
 //! coefficients `$\vec{c}$` using [`FitResult::linear_coefficients`](crate::fit::FitResult::linear_coefficients)
 //!
 //! **Fit Statistics:** To get additional statistical information after the fit
-//! has finished, use the [`LevMarSolver::fit_with_statistics`](crate::solvers::levmar::LevMarSolver::fit_with_statistics)
-//! method.
+//! has finished, use [`FitStatistics::try_from`](crate::statistics::FitStatistics::try_from)
+//! on the fit result.
 //!
 //! ```no_run
 //! # use varpro::model::SeparableModel;
@@ -169,7 +190,7 @@
 //! # use varpro::problem::*;
 //! # let problem : varpro::problem::SeparableProblem<SeparableModel<f64>, SingleRhs> = unimplemented!();
 //! # use varpro::solvers::levmar::LevMarSolver;
-//! # let fit_result = LevMarSolver::default().fit(problem).unwrap();
+//! # let fit_result = LevMarSolver::default().solve(problem).unwrap();
 //! let alpha = fit_result.nonlinear_parameters();
 //! let coeff = fit_result.linear_coefficients().unwrap();
 //! ```
@@ -272,7 +293,7 @@
 //!
 //! // 3. Solve using the fitting problem
 //! let fit_result = LevMarSolver::default()
-//!     .fit(problem)
+//!     .solve(problem)
 //!     .expect("fit must succeed");
 //! // the nonlinear parameters after fitting
 //! // they are in the same order as the parameter names given to the model
@@ -353,7 +374,7 @@
 //!
 //! // fit the data
 //! let fit_result = LevMarSolver::default()
-//!                 .fit(problem)
+//!                 .solve(problem)
 //!                 .expect("fit must succeed");
 //! // the nonlinear parameters
 //! let alpha = fit_result.nonlinear_parameters();
@@ -432,7 +453,7 @@
 //!
 //! // fit the data
 //! let fit_result = LevMarSolver::default()
-//!                 .fit(problem)
+//!                 .solve(problem)
 //!                 .expect("fit must succeed");
 //!
 //! // the nonlinear parameters
@@ -454,6 +475,33 @@
 //! observation. Since the linear coefficients are allowed to vary, they now
 //! also become a matrix instead of a single vector. Each column corresponds to
 //! the best fit linear coefficients of the observations in the same matrix column.
+//!
+//! # LAPACK backends
+//!
+//! This crate exposes a couple of features to choose a LAPACK backend. Only
+//! one (or none) of the features must be enabled:
+//!
+//! * lapack-netlib: Use the bundled netlib implementation from
+//!   the [`netlib-src`](https://crates.io/crates/netlib-src) crate. Useful
+//!   during development, but will typically perform measurably worse than
+//!   the other backends.
+//! * lapack-mkl: Alias for `lapack-mkl-static-seq` and a good default for MKL.
+//! * lapack-mkl-static-seq: Link the _sequential_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _statically_.
+//! * lapack-mkl-static-par: Link the _parallel_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _statically_.
+//! * lapack-mkl-dynamic-seq: Link the _sequential_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _dynamically_.
+//! * lapack-mkl-dynamic-par: Link the _parallel_ version of [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html)
+//!   _dynamically_.
+//! * lapack-openblas: Use [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS)
+//!   as the LAPACK backend.
+//! * lapack-accelerate: Use Apple's [Accelerate Framework](https://developer.apple.com/documentation/accelerate).
+//! * `lapack-custom`: Use a custom lapack backend whose functions must be
+//!   available at linktime. It is your responsibility to make sure those are
+//!   ABI compatible to the function signatures in the [`lapack`](https://crates.io/crates/lapack)
+//!   crate.
+//!
 //!
 //! # References and Further Reading
 //!

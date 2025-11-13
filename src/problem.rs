@@ -1,9 +1,7 @@
 use crate::prelude::*;
 use crate::util::Weights;
-use nalgebra::{
-    ComplexField, DMatrix, DefaultAllocator, DimMin, MatrixView, Scalar, VectorView, SVD,
-};
-use nalgebra::{Dim, Dyn};
+use nalgebra::Dyn;
+use nalgebra::{ComplexField, DMatrix, MatrixView, Scalar, VectorView};
 
 mod builder;
 
@@ -13,7 +11,7 @@ pub use builder::SeparableProblemBuilderError;
 /// trait describing the type of right hand side for the problem, meaning either
 /// a single right hand side or multiple right hand sides. The latter implies
 /// global fitting.
-pub trait RhsType {}
+pub trait RhsType: std::fmt::Debug {}
 
 /// This type indicates that the associated problem has a single (vector) right hand side.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -68,42 +66,11 @@ where
     pub(crate) Y_w: DMatrix<Model::ScalarType>,
     /// a reference to the separable model we are trying to fit to the data
     pub(crate) model: Model,
-    /// truncation epsilon for SVD below which all singular values are assumed zero
-    pub(crate) svd_epsilon: <Model::ScalarType as ComplexField>::RealField,
     /// the weights of the data. If none are given, the data is not weighted
     /// If weights were provided, the builder has checked that the weights have the
     /// correct dimension for the data
     pub(crate) weights: Weights<Model::ScalarType, Dyn>,
-    /// the currently cached calculations belonging to the currently set model parameters
-    /// those are updated on set_params. If this is None, then it indicates some error that
-    /// is propagated on to the levenberg-marquardt crate by also returning None results
-    /// by residuals() and/or jacobian()
-    pub(crate) cached: Option<CachedCalculations<Model::ScalarType, Dyn, Dyn>>,
     phantom: std::marker::PhantomData<Rhs>,
-}
-
-/// helper structure that stores the cached calculations,
-/// which are carried out by the SeparableProblem on setting the parameters
-#[derive(Debug, Clone)]
-pub(crate) struct CachedCalculations<ScalarType, ModelDim, OutputDim>
-where
-    ScalarType: Scalar + ComplexField,
-    ModelDim: Dim,
-    OutputDim: Dim + nalgebra::DimMin<ModelDim>,
-    DefaultAllocator: nalgebra::allocator::Allocator<ModelDim>,
-    DefaultAllocator: nalgebra::allocator::Allocator<OutputDim>,
-    DefaultAllocator:
-        nalgebra::allocator::Allocator<<OutputDim as DimMin<ModelDim>>::Output, ModelDim>,
-    DefaultAllocator:
-        nalgebra::allocator::Allocator<OutputDim, <OutputDim as DimMin<ModelDim>>::Output>,
-    DefaultAllocator: nalgebra::allocator::Allocator<<OutputDim as DimMin<ModelDim>>::Output>,
-{
-    /// The current residual matrix of model function values belonging to the current parameters
-    pub(crate) current_residuals: DMatrix<ScalarType>,
-    /// Singular value decomposition of the current function value matrix
-    pub(crate) current_svd: SVD<ScalarType, OutputDim, ModelDim>,
-    /// the linear coefficients `$\boldsymbol C$` providing the current best fit
-    pub(crate) linear_coefficients: DMatrix<ScalarType>,
 }
 
 impl<Model, Rhs: RhsType> std::fmt::Debug for SeparableProblem<Model, Rhs>
@@ -115,9 +82,7 @@ where
         f.debug_struct("SeparableProblem")
             .field("y_w", &self.Y_w)
             .field("model", &"/* omitted */")
-            .field("svd_epsilon", &self.svd_epsilon)
             .field("weights", &self.weights)
-            .field("cached", &self.cached)
             .finish()
     }
 }
@@ -127,31 +92,13 @@ where
     Model: SeparableNonlinearModel,
     Model::ScalarType: Scalar + ComplexField + Copy,
 {
-    /// Get the linear coefficients for the current problem. After a successful pass of the solver,
-    /// this contains a value with the best fitting linear coefficients.
-    ///
-    /// # Returns
-    ///
-    /// Either the current best estimate coefficients or None, if none were calculated or the solver
-    /// encountered an error. After the solver finished, this is the least squares best estimate
-    /// for the linear coefficients of the basis functions.
-    ///
-    /// Since this method is for fitting multiple right hand sides, the coefficients
-    /// are returned as a matrix view where each column represents the coefficients
-    /// for the corresponding right-hand side.
-    pub fn linear_coefficients(&self) -> Option<MatrixView<Model::ScalarType, Dyn, Dyn>> {
-        self.cached
-            .as_ref()
-            .map(|cache| cache.linear_coefficients.as_view())
-    }
-
     /// The weighted data matrix `$\boldsymbol{Y}_w$` to which to fit the model. Note
     /// that the weights are already applied to the data matrix and this
     /// is not the original data vector.
     ///
     /// This method is for fitting multiple right hand sides, hence the data
     /// matrix is a matrix that contains the right hand sides as columns.
-    pub fn weighted_data(&self) -> MatrixView<Model::ScalarType, Dyn, Dyn> {
+    pub fn weighted_data(&self) -> MatrixView<'_, Model::ScalarType, Dyn, Dyn> {
         self.Y_w.as_view()
     }
 }
@@ -161,32 +108,13 @@ where
     Model: SeparableNonlinearModel,
     Model::ScalarType: Scalar + ComplexField + Copy,
 {
-    /// Get the linear coefficients for the current problem. After a successful pass of the solver,
-    /// this contains a value with the best fitting linear coefficients
-    /// # Returns
-    /// Either the current best estimate coefficients or None, if none were calculated or the solver
-    /// encountered an error. After the solver finished, this is the least squares best estimate
-    /// for the linear coefficients of the basis functions.
-    ///
-    /// Since this method is for fitting a single right hand side, the coefficients
-    /// are returned as a single column vector.
-    pub fn linear_coefficients(&self) -> Option<VectorView<Model::ScalarType, Dyn>> {
-        self.cached
-            .as_ref()
-            .map(|cache|{
-                debug_assert_eq!(cache.linear_coefficients.ncols(),1,
-                    "coefficient matrix must have exactly one column for single right hand side. This indicates a programming error in the library.");
-                cache.linear_coefficients.as_view()
-            })
-    }
-
     /// The weighted data vector `$\vec{y}_w$` to which to fit the model. Note
     /// that the weights are already applied to the data vector and this
     /// is not the original data vector.
     ///
     /// This method is for fitting a single right hand side, hence the data
     /// is a single column vector.
-    pub fn weighted_data(&self) -> VectorView<Model::ScalarType, Dyn> {
+    pub fn weighted_data(&self) -> VectorView<'_, Model::ScalarType, Dyn> {
         debug_assert_eq!(
             self.Y_w.ncols(),
             1,

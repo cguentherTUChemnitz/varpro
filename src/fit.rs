@@ -3,29 +3,51 @@ use crate::{
     problem::{MultiRhs, RhsType, SeparableProblem, SingleRhs},
 };
 use levenberg_marquardt::MinimizationReport;
-use nalgebra::{Dyn, MatrixView, OMatrix, OVector, RealField, Scalar, VectorView};
+use nalgebra::{DMatrix, DMatrixView, DVectorView, Dyn, OMatrix, OVector, RealField, Scalar};
 use num_traits::Float;
 
 /// A helper type that contains the fitting problem after the
 /// minimization, as well as a report and some convenience functions.
 ///
-/// This structure is returned by the [`LevMarSolver::fit`](crate::solvers::levmar::LevMarSolver::fit)
-/// and [`LevMarSolver::fit_with_statistics`](crate::solvers::levmar::LevMarSolver::fit_with_statistics) methods.
+/// This structure is returned by the [`LevMarSolver::solve`](crate::solvers::levmar::LevMarSolver::solve)
+/// and other solve methods of [`LevMarSolver`](crate::solvers::levmar::LevMarSolver).
 #[derive(Debug)]
-pub struct FitResult<Model, Rhs: RhsType>
+pub struct FitResult<Model, Rhs>
 where
     Model: SeparableNonlinearModel,
     Model::ScalarType: RealField + Scalar + Float,
+    Rhs: RhsType,
 {
     /// The final state of the fitting problem after the
     /// minimization finished (regardless of whether fitting was successful or not).
     pub problem: SeparableProblem<Model, Rhs>,
+
+    /// the linear coefficient matrix (in case of single rhs: matrix has
+    /// only one column) at the solution.
+    pub(crate) linear_coefficients: Option<DMatrix<Model::ScalarType>>,
 
     /// The minimization report of the underlying solver.
     /// It contains information about the minimization process
     /// and should be queried to see whether the minimization
     /// was considered successful.
     pub minimization_report: MinimizationReport<Model::ScalarType>,
+}
+
+impl<Model, Rhs> FitResult<Model, Rhs>
+where
+    Model: SeparableNonlinearModel,
+    Model::ScalarType: RealField + Scalar + Float,
+    Rhs: RhsType,
+{
+    /// this returns the linear coefficients in matrix form. For a single
+    /// right hand side, this is a matrix with one column. Typically,
+    /// the [`linear_coefficients`](Self::linear_coefficients) function should be called to get the
+    /// appropriate view for single or multiple right hand sides out of
+    /// the box. This function exists to overcome some limitations on how
+    /// generics work.
+    pub fn linear_coefficients_generic(&self) -> Option<DMatrixView<'_, Model::ScalarType>> {
+        self.linear_coefficients.as_ref().map(|c| c.as_view())
+    }
 }
 
 impl<Model> FitResult<Model, MultiRhs>
@@ -42,8 +64,8 @@ where
     /// The coefficients vectors for the individual
     /// members of the datasets are the colums of the returned matrix. That means
     /// one coefficient vector for each right hand side.
-    pub fn linear_coefficients(&self) -> Option<MatrixView<Model::ScalarType, Dyn, Dyn>> {
-        Some(self.problem.cached.as_ref()?.linear_coefficients.as_view())
+    pub fn linear_coefficients(&self) -> Option<DMatrixView<'_, Model::ScalarType>> {
+        self.linear_coefficients.as_ref().map(|c| c.as_view())
     }
 
     /// **Note** This implementation is for fitting problems with multiple right hand sides.
@@ -70,14 +92,14 @@ where
     /// Convenience function to get the linear coefficients after the fit has
     /// finished. Will return None if there was an error during fitting.
     /// The coefficients are given as a single vector.
-    pub fn linear_coefficients(&self) -> Option<VectorView<Model::ScalarType, Dyn>> {
-        let coeff = &self.problem.cached.as_ref()?.linear_coefficients;
+    pub fn linear_coefficients(&self) -> Option<DVectorView<'_, Model::ScalarType>> {
+        let coeff = self.linear_coefficients.as_ref()?;
         debug_assert_eq!(
             coeff.ncols(),
             1,
             "Coefficient matrix must have exactly one colum for problem with single right hand side. This indicates a programming error inside this library!"
         );
-        Some(self.problem.cached.as_ref()?.linear_coefficients.column(0))
+        Some(coeff.column(0))
     }
     /// **Note** This implementation is for fitting problems with multiple right hand sides
     ///
@@ -100,11 +122,13 @@ where
     /// internal helper for constructing an instance
     pub(crate) fn new(
         problem: SeparableProblem<Model, Rhs>,
+        linear_coefficients: Option<DMatrix<Model::ScalarType>>,
         minimization_report: MinimizationReport<Model::ScalarType>,
     ) -> Self {
         Self {
             problem,
             minimization_report,
+            linear_coefficients,
         }
     }
 

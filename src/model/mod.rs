@@ -50,8 +50,8 @@ pub mod test;
 /// Another important thing is to ensure that the basis functions are not linearly dependent,
 /// at least not for all possible choices of `$\vec{alpha}$`. It is sometimes unavoidable that
 /// that model functions become linearly
-/// dependent for *some* combinations of model parameters. See also
-/// [SeparableProblemBuilder::epsilon](crate::problem::SeparableProblemBuilder::epsilon).
+/// dependent for *some* combinations of model parameters. This VarPro implementation exhibits
+/// robustness against such cases through automatic numerical tolerance handling.
 ///
 /// It perfectly fine for a base function to depend on all or none of the model parameters or any
 /// subset of the model parameters. There is also no restrictions on which base functions

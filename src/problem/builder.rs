@@ -1,9 +1,9 @@
 use crate::prelude::*;
 use crate::problem::SeparableProblem;
 use crate::util::Weights;
-use levenberg_marquardt::LeastSquaresProblem;
-use nalgebra::{ComplexField, DMatrix, Dyn, OMatrix, OVector, Scalar};
-use num_traits::{Float, Zero};
+use nalgebra::{ComplexField, DMatrix, Dyn, OMatrix, OVector, RealField, Scalar};
+
+use num_traits::{float::TotalOrder, Float, Zero};
 use std::ops::Mul;
 use thiserror::Error as ThisError;
 
@@ -89,11 +89,6 @@ where
     Y: Option<DMatrix<Model::ScalarType>>,
     /// Required: the model to be fitted to the data
     separable_model: Model,
-    /// Optional: set epsilon below which two singular values
-    /// are considered zero.
-    /// if this is not given, when building the builder,
-    /// the this is set to machine epsilon.
-    epsilon: Option<<Model::ScalarType as ComplexField>::RealField>,
     /// Optional: weights to be applied to the data for weightes least squares
     /// if no weights are given, the problem is unweighted, i.e. the same as if
     /// all weights were 1.
@@ -117,7 +112,6 @@ where
         Self {
             Y: None,
             separable_model: model,
-            epsilon: None,
             weights: Weights::default(),
             phantom: Default::default(),
         }
@@ -195,7 +189,6 @@ where
         Self {
             Y: None,
             separable_model: model,
-            epsilon: None,
             weights: Weights::default(),
             phantom: Default::default(),
         }
@@ -233,23 +226,6 @@ where
         Mul<Model::ScalarType, Output = Model::ScalarType> + Float,
     Model: SeparableNonlinearModel,
 {
-    /// **Optional** This value is relevant for the solver, because it uses singular value decomposition
-    /// internally. This method sets a value `\epsilon` for which smaller (i.e. absolute - wise) singular
-    /// values are considered zero. In essence this gives a truncation of the SVD. This might be
-    /// helpful if two basis functions become linear dependent when the nonlinear model parameters
-    /// align in an unfortunate way. In this case a higher epsilon might increase the robustness
-    /// of the fitting process.
-    ///
-    /// If this value is not given, it will be set to machine epsilon.
-    ///
-    /// The given epsilon is automatically converted to a non-negative number.
-    pub fn epsilon(self, eps: <Model::ScalarType as ComplexField>::RealField) -> Self {
-        Self {
-            epsilon: Some(<_ as Float>::abs(eps)),
-            ..self
-        }
-    }
-
     /// **Optional** Add diagonal weights to the problem (meaning data points are statistically
     /// independent). If this is not given, the problem is unweighted, i.e. each data point has
     /// unit weight.
@@ -275,11 +251,13 @@ where
     /// If all prerequisites are fulfilled, returns a [SeparableProblem](super::SeparableProblem) with the given
     /// content and the parameters set to the initial guess. Otherwise returns an error variant.
     #[allow(non_snake_case)]
-    pub fn build(self) -> Result<SeparableProblem<Model, Rhs>, SeparableProblemBuilderError> {
+    pub fn build(self) -> Result<SeparableProblem<Model, Rhs>, SeparableProblemBuilderError>
+    where
+        Model::ScalarType: Float + RealField + TotalOrder,
+    {
         // and assign the defaults to the values we don't have
         let Y = self.Y.ok_or(SeparableProblemBuilderError::YDataMissing)?;
         let model = self.separable_model;
-        let epsilon = self.epsilon.unwrap_or_else(Float::epsilon);
         let weights = self.weights;
 
         // now do some sanity checks for the values and return
@@ -297,30 +275,17 @@ where
         }
 
         if !weights.is_size_correct_for_data_length(Y.nrows()) {
-            //check that weights have correct length if they were given
             return Err(SeparableProblemBuilderError::InvalidLengthOfWeights);
         }
 
-        //now that we have valid inputs, construct the levmar problem
-        // 1) create weighted data
-        #[allow(non_snake_case)]
         let Y_w = &weights * Y;
 
-        let params = model.params();
-        // 2) initialize the levmar problem. Some field values are dummy initialized
-        // (like the SVD) because they are calculated in step 3 as part of set_params
-        let mut problem = SeparableProblem {
-            // these parameters all come from the builder
+        Ok(SeparableProblem {
             Y_w,
             model,
-            svd_epsilon: epsilon,
-            cached: None,
             weights,
             phantom: Default::default(),
-        };
-        problem.set_params(&params);
-
-        Ok(problem)
+        })
     }
 }
 // make available for testing and doc tests

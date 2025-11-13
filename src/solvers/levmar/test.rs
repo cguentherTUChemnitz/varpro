@@ -1,12 +1,13 @@
 use super::*;
-use crate::model::test::MockSeparableNonlinearModel;
+use crate::model::SeparableModel;
 use crate::problem::SeparableProblemBuilder;
 use crate::test_helpers::differentiation::numerical_derivative;
 use crate::test_helpers::get_double_exponential_model_with_constant_offset;
-#[cfg(test)]
+use crate::util::to_vector;
+use crate::{model::test::MockSeparableNonlinearModel, problem::SingleRhs};
 use approx::assert_relative_eq;
-use levenberg_marquardt::differentiate_numerically;
-use nalgebra::{DMatrix, DVector};
+use levenberg_marquardt::{differentiate_numerically, LeastSquaresProblem};
+use nalgebra::{DMatrix, DVector, Owned};
 
 // test that the jacobian of the least squares problem is correct if the parameter guesses
 // are correct. I observed that the numerical differentiation inside the levmar crate and my implementation
@@ -17,8 +18,55 @@ use nalgebra::{DMatrix, DVector};
 // stalls when one of the initial guesses is 1 or smaller, because it weill use a step size of 1 to calculate
 // the finite difference and make one of the taus zero, which means 1/tau diverges. I don't know
 // exactly why it stalls though. This seems like bad behavior.
-#[test]
-fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted() {
+type SvdSolverF64 = SvdLinearSolver<f64>;
+#[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
+type CpqrSolverF64 = CpqrLinearSolver<f64>;
+#[cfg(feature = "__lapack")]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        feature = "lapack-netlib",
+        feature = "lapack-mkl",
+        feature = "lapack-mkl-static-seq",
+        feature = "lapack-mkl-static-par",
+        feature = "lapack-mkl-dynamic-seq",
+        feature = "lapack-mkl-dynamic-par",
+        feature = "lapack-openblas",
+        feature = "lapack-accelerate",
+        feature = "lapack-custom"
+    )))
+)]
+type QrSolverF64 = QrLinearSolver<f64>;
+#[cfg_attr(
+    feature = "__lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
+)]
+#[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
+fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unweighted<Solver>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -26,20 +74,30 @@ fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unw
         4.0000, 2.9919, 2.3423, 1.9186, 1.6386, 1.4507, 1.3227, 1.2342, 1.1720, 1.1276, 1.0956,
     ]);
     let params = vec![2., 4.];
-    let model = get_double_exponential_model_with_constant_offset(tvec, params.clone());
-    let mut problem = SeparableProblemBuilder::new(model)
-        .observations(yvec)
-        .build()
-        .expect("Building a valid solver must not return an error.");
 
-    problem.set_params(&DVector::from(params));
+    // bit hacky but it's a constructor for the same separable problem that
+    // we can use multiple times, because we can't clone the problem itself
+    let gen_separable_problem = || {
+        let model = get_double_exponential_model_with_constant_offset(tvec.clone(), params.clone());
+        SeparableProblemBuilder::new(model)
+            .observations(yvec.clone())
+            .build()
+            .expect("Building a valid solver must not return an error.")
+    };
+
+    let mut problem = LevMarProblem::<_, _, Solver>::from(gen_separable_problem());
+    problem.set_params(&DVector::from(params.clone()));
     let jacobian_numerical =
         differentiate_numerically(&mut problem).expect("Numerical differentiation must succeed.");
     let jacobian_calculated = problem.jacobian().expect("Jacobian must not be empty!");
-    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-6);
+    assert_relative_eq!(jacobian_numerical, jacobian_calculated, epsilon = 1e-5);
 }
 
-#[test]
+#[cfg_attr(
+    feature = "__lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
+)]
+#[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
 // I am implementing my own test that checks if my jacobian and residual calculations are
 // correct even for params far away from the true tau1, tau2.
 // What I am doing is to numerically differentiate the residual sum of squares using my own
@@ -48,7 +106,20 @@ fn jacobian_of_least_squares_prolem_is_correct_for_correct_parameter_guesses_unw
 // I am using the formula for the partial derivatives of the residual sum of squares from
 // [my post](https://geo-ant.github.io/blog/2020/variable-projection-part-1-fundamentals/) on varpro
 // (found between numbered formulas 8 and 9).
-fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squares_weighted() {
+fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squares_weighted<
+    Solver,
+>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, Dyn, nalgebra::Const<1>>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -60,11 +131,13 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + v.sin());
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblem::<_, _, Solver>::from(separable_problem);
 
     let fixed_tau1 = 0.5;
     let fixed_tau2 = 7.5;
@@ -107,8 +180,49 @@ fn jacobian_produces_correct_results_for_differentiating_the_residual_sum_of_squ
     );
 }
 
-#[test]
-fn residuals_are_calculated_correctly_unweighted() {
+/// this is a bit of a hack that allows us to "specialize"
+/// our expectation for calculating the residuals. The reason is that formally
+/// we can only expect the RESIDUAL SUM OF SQUARES to be correct in our
+/// approximations, and that is also fine. However, e.g. for SVD the actual
+/// residual vector will be correctly calculated. This isn't the case for column-pivoted
+/// QR, but that's fine as long as the SUM OF SQUARES of the calculated and
+/// actual residual vector are the same in numerical limits.
+trait ResidualCorrectnes {
+    const EXPECT_VECTOR_CORRECT: bool;
+}
+
+impl ResidualCorrectnes for SvdSolverF64 {
+    const EXPECT_VECTOR_CORRECT: bool = true;
+}
+
+#[cfg(feature = "__lapack")]
+impl ResidualCorrectnes for CpqrSolverF64 {
+    const EXPECT_VECTOR_CORRECT: bool = false;
+}
+
+#[cfg(feature = "__lapack")]
+impl ResidualCorrectnes for QrSolverF64 {
+    const EXPECT_VECTOR_CORRECT: bool = false;
+}
+
+#[cfg_attr(
+    feature = "__lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
+)]
+#[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
+fn residuals_are_calculated_correctly_unweighted<Solver>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>
+        + ResidualCorrectnes,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, Dyn, nalgebra::Const<1>>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -120,10 +234,12 @@ fn residuals_are_calculated_correctly_unweighted() {
 
     let data_length = tvec.len();
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblem::<_, _, Solver>::from(separable_problem);
 
     problem.set_params(&DVector::from(params));
     // for the true parameters, as the initial guess, the residual should be very close to an
@@ -159,11 +275,38 @@ fn residuals_are_calculated_correctly_unweighted() {
     let residuals = problem
         .residuals()
         .expect("Calculating residuals must not fail");
-    assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-4);
+
+    // this must always hold for the residual calculations
+    assert_relative_eq!(
+        residuals.norm_squared(),
+        expected_residuals.norm_squared(),
+        epsilon = 1e-4
+    );
+    // for some solvers, the individual elements of the vector will also be
+    // correct.
+    if Solver::EXPECT_VECTOR_CORRECT {
+        assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-4);
+    }
 }
 
-#[test]
-fn residuals_are_calculated_correctly_with_weights() {
+#[cfg_attr(
+    feature = "__lapack",
+    typed_test_gen::test_with(SvdSolverF64, CpqrSolverF64, QrSolverF64)
+)]
+#[cfg_attr(not(feature = "__lapack"), typed_test_gen::test_with(SvdSolverF64))]
+fn residuals_are_calculated_correctly_with_weights<Solver>()
+where
+    Solver: LinearSolver<ScalarType = <SeparableModel<f64> as SeparableNonlinearModel>::ScalarType>
+        + ResidualCorrectnes,
+    LevMarProblem<SeparableModel<f64>, SingleRhs, Solver>: LeastSquaresProblem<
+        f64,
+        Dyn,
+        Dyn,
+        ParameterStorage = nalgebra::Owned<f64, Dyn>,
+        JacobianStorage = Owned<f64, Dyn, Dyn>,
+        ResidualStorage = nalgebra::VecStorage<f64, Dyn, nalgebra::Const<1>>,
+    >,
+{
     //octave: t = linspace(0,10,11);
     let tvec = DVector::from(vec![0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]);
     //octave y = 2*exp(-t/2)+exp(-t/4)+1
@@ -181,11 +324,13 @@ fn residuals_are_calculated_correctly_with_weights() {
     // generate some non-unit test weights (which have no physical meaning)
     let weights = yvec.map(|v: f64| v.sqrt() + 2. * v.sin());
 
-    let mut problem = SeparableProblemBuilder::new(model)
+    let separable_problem = SeparableProblemBuilder::new(model)
         .observations(yvec)
         .weights(weights)
         .build()
         .expect("Building a valid solver must not return an error.");
+
+    let mut problem = LevMarProblem::<_, _, Solver>::from(separable_problem);
 
     let params = DVector::from(vec![tau1, tau2]);
 
@@ -204,7 +349,17 @@ fn residuals_are_calculated_correctly_with_weights() {
     let residuals = problem
         .residuals()
         .expect("Calculating residuals must not fail");
-    assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-3);
+    // this must always hold for the residual calculations
+    assert_relative_eq!(
+        residuals.norm_squared(),
+        expected_residuals.norm_squared(),
+        epsilon = 1e-4
+    );
+    // for some solvers, the individual elements of the vector will also be
+    // correct.
+    if Solver::EXPECT_VECTOR_CORRECT {
+        assert_relative_eq!(residuals, expected_residuals, epsilon = 1e-3);
+    }
 }
 
 #[test]

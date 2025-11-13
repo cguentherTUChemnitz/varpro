@@ -13,12 +13,10 @@ fn new_builder_starts_with_empty_fields() {
     let SeparableProblemBuilder {
         Y: y,
         separable_model: _model,
-        epsilon,
         weights,
         ..
     } = builder;
     assert!(y.is_none());
-    assert!(epsilon.is_none());
     assert_eq!(weights, Weights::Unit);
 }
 
@@ -51,17 +49,12 @@ fn builder_assigns_fields_correctly_simple_case() {
         .expect("Valid builder should not fail build");
 
     assert_eq!(problem.Y_w, y);
-    assert_eq!(problem.svd_epsilon, f64::EPSILON); //clippy moans, but it's wrong (again!)
-    assert!(
-        problem.cached.is_some(),
-        "cached calculations are assigned when problem is built"
-    );
 }
 
 #[test]
 #[allow(clippy::float_cmp)] //clippy moans, but it's wrong (again!)
 #[allow(non_snake_case)]
-fn builder_assigns_fields_correctly_with_weights_and_epsilon() {
+fn builder_assigns_fields_correctly_with_weights() {
     let mut model = MockSeparableNonlinearModel::default();
 
     let y = DVector::from(vec![
@@ -87,11 +80,9 @@ fn builder_assigns_fields_correctly_with_weights_and_epsilon() {
 
     let problem = SeparableProblemBuilder::new(model)
         .observations(y.clone())
-        .epsilon(-1.337) // check that negative values are converted to absolutes
         .weights(weights.clone())
         .build()
         .expect("Valid builder should not fail");
-    assert_eq!(problem.svd_epsilon, 1.337);
     assert_eq!(
         problem.Y_w,
         &W * &y,

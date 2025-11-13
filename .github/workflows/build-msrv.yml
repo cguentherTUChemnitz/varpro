@@ -21,9 +21,9 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.75.0
+          toolchain: 1.87.0
           override: true
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-features
+          args: --features=lapack-netlib
