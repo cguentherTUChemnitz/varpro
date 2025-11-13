@@ -1,6 +1,6 @@
 [package]
 name = "varpro"
-version = "0.13.3"
+version = "0.14.0"
 authors = ["geo-ant"]
 edition = "2021"
 license = "MIT"
@@ -36,7 +36,7 @@ lapack-custom = ["__lapack","nalgebra-lapack/lapack-custom"]
 thiserror = "1"
 levenberg-marquardt = "0.15"
 nalgebra = { version = "0.34", features = []}
-nalgebra-lapack = { version = "0.26", default-features = false, optional = true}
+nalgebra-lapack = { version = "0.27", default-features = false, optional = true}
 num-traits = "0.2"
 distrs = "0.2"
 
@@ -66,8 +66,3 @@ harness = false
 rustdoc-args = ["--html-in-header", "katex-header.html", "--cfg", "docsrs"]
 # Enable LAPACK features for documentation (using netlib as it's most common)
 features = ["lapack-netlib"]
-
-# TODO TODO TODO remove this before publish
-[patch.crates-io]
-nalgebra = {path = "../nalgebra"}
-nalgebra-lapack = {path = "../nalgebra/nalgebra-lapack"}
