@@ -44,7 +44,7 @@ solver backends and significant performance improvements.
   ```
 
 ### MSRV
-* changed to 1.85 because some downstream dependencies require edition 2024
+* changed MSRV to much higher rustc version (see toml file)
 
 ## 0.13.3
 
