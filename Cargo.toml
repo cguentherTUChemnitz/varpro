@@ -36,7 +36,8 @@ lapack-custom = ["__lapack","nalgebra-lapack/lapack-custom"]
 [dependencies]
 thiserror = "1"
 levenberg-marquardt = "0.15"
-nalgebra = { version = "0.34", features = []}
+nalgebra = { git = "git@github.com:cguentherTUChemnitz/nalgebra.git", features = []}
+
 nalgebra-lapack = { version = "0.27", default-features = false, optional = true}
 num-traits = "0.2"
 distrs = "0.2"
